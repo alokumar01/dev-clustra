@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# npm
+package-lock.json
+
+# pnpm
+.pnpm-store/
+
+.env
+
+doc.md
+
+testmail.js
+

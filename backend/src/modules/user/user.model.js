@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: null,
+        default: null || "https://api.dicebear.com/9.x/glass/png",
     },
     role: {
         type: String,
@@ -38,7 +38,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "active",
         enum: ["active", "blocked"],
-    },  
+    },
+    emailVerifyHash: {
+        type: String,
+        default: null
+    },
+    emailVerifyExpires: {
+        type: Date,
+        default: null,
+    }
+
 }, {timestamps: true});
 
 export default mongoose.model("User", userSchema);
