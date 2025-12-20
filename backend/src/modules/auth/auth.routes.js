@@ -1,9 +1,12 @@
 import express from "express"
-import { signupController } from "./auth.controller.js"
+import { signupController, verifyEmailController } from "./auth.controller.js"
+import limiter from "../../config/rateLimit.js"
+
 
 const router = express.Router();
 
-router.post("/signup", signupController);
+router.post("/signup", limiter, signupController);
+router.get("/verify-email", limiter, verifyEmailController);
 
 
 export default router;
