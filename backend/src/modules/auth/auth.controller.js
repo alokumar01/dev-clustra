@@ -1,4 +1,4 @@
-import { signupService, verifyEmailService } from "./auth.service.js";
+import { resendVerificationEmailServices, signupService, verifyEmailService } from "./auth.service.js";
 
 
 export const signupController = async (req, res, next) => { // Controller ka kaam hai HTTP data extract karna
@@ -33,12 +33,31 @@ export const verifyEmailController = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: "Your email is now verified. You can log in.",
-            data: {
-                username,
-                email,
-                isEmailVerified
-            }
+            message: "Your email is verified now. You can start log in.",
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+//Resend Verification mail to user
+export const resendVerificationEmailController = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email Id is required"
+            });
+        }
+
+        await resendVerificationEmailServices({ email })
+
+        res.status(200).json({
+            success: true,
+            message: "If your email exists, you will receive a verification link on your email,",
         });
 
     } catch (error) {
