@@ -4,7 +4,8 @@ import ApiError from "../../helpers/apiError.js";
 import { sendVerificationEmail } from "../../email/intents/sendVerificationEmail.js";
 import { generateEmailToken, hashToken} from "../../helpers/crypto.js";
 
-export const signupService = async({ username, email, password })  => { // service object receive karti hai 
+//// service, object receive karti hai, services db se talk karti hai,
+export const signupService = async({ username, email, password })  => {  
     const existingUser = await User.findOne({
         $or: [{ email }, { username }]
     });
@@ -22,8 +23,6 @@ export const signupService = async({ username, email, password })  => { // servi
     });
 
     const {emailToken, hash} = generateEmailToken();
-    // console.log(emailToken);
-    // console.log(hash);
 
     user.emailVerifyHash = hash;
     user.emailVerifyExpires = Date.now() + 10 * 60 * 1000; //10 minutes
@@ -31,15 +30,15 @@ export const signupService = async({ username, email, password })  => { // servi
     
     try {
         await sendVerificationEmail({
-            username,
-            email, 
-            token: emailToken
+            username: user.username,
+            email: user.email,
+            token: emailToken,
+            type: "signup"
         })
         
     } catch (error) {
         console.info('email failed', error);
     }
-
 
     return {
         id: user._id,
@@ -70,3 +69,31 @@ export const verifyEmailService = async({ token }) => {
     return { user };
 };
 
+export const resendVerificationEmailServices = async({ email }) => {
+    const user = await User.findOne({ email });
+    
+    if (!user) return;
+
+    if (user.isEmailVerified) {
+        throw new ApiError(400, "Email is already verified, you can log in now", "EMAIL_ALREADY_VERIFIED ")
+    }
+
+    const { emailToken, hash } = generateEmailToken();
+    user.emailVerifyHash = hash;
+    user.emailVerifyExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    try {
+        await sendVerificationEmail({
+            username: user.username,
+            email: user.email,
+            token: emailToken,
+            type: "resend"
+        })
+    } catch (error) {
+        console.log("Email sent failed", error);
+        throw new ApiError(500, "Failed to sent email, Try again later");
+    }
+
+    return { username : user.username, email: user.email};
+}
