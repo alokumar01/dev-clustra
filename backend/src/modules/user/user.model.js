@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: null || "https://api.dicebear.com/9.x/glass/png",
+        default: "https://api.dicebear.com/9.x/glass/png",
     },
     role: {
         type: String,
@@ -37,7 +37,15 @@ const userSchema = new mongoose.Schema({
     accountStatus: {
         type: String,
         default: "active",
-        enum: ["active", "blocked"],
+        enum: ["active", "suspended", "blocked"],
+    },
+    suspendedUntil: {
+        type: Date,
+        default: null
+    },
+    statusReason: {
+        type: String,
+        default: ""
     },
     emailVerifyHash: {
         type: String,
@@ -49,5 +57,11 @@ const userSchema = new mongoose.Schema({
     }
 
 }, {timestamps: true});
+
+//index
+// userSchema.index({ email: 1 });
+// userSchema.index({ username: 1 });
+userSchema.index({ accountStatus: 1 });
+userSchema.index({ emailVerifyHash: 1 });
 
 export default mongoose.model("User", userSchema);
