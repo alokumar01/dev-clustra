@@ -1,6 +1,7 @@
 import express from "express"
-import { resendVerificationEmailController, signupController, verifyEmailController } from "./auth.controller.js"
+import { loginController, logoutController, resendVerificationEmailController, signupController, verifyEmailController } from "./auth.controller.js"
 import limiter from "../../config/rateLimit.js"
+import { protect } from "../../middleswares/auth.middleware.js";
 
 
 const router = express.Router();
@@ -8,6 +9,12 @@ const router = express.Router();
 router.post("/signup", limiter, signupController);
 router.get("/verify-email", limiter, verifyEmailController);
 router.post("/resend-email", limiter, resendVerificationEmailController);
+router.post("/login", limiter, loginController);
+router.get("/me", protect, (req, res) => {
+    res.status(200).json({ success: true, user: req.user });
+})
+
+router.get("/logout", logoutController)
 
 
 export default router;

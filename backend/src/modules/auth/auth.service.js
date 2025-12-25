@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcrypt, { hash } from "bcryptjs";
 import User from "../user/user.model.js"
 import ApiError from "../../helpers/apiError.js";
 import { sendVerificationEmail } from "../../email/intents/sendVerificationEmail.js";
@@ -69,8 +69,8 @@ export const verifyEmailService = async({ token }) => {
     return { user };
 };
 
-export const resendVerificationEmailServices = async({ email }) => {
-    const user = await User.findOne({ email });
+export const resendVerificationEmailService = async({ email }) => {
+    const user = await User.findOne({ email })
     
     if (!user) return;
 
@@ -96,4 +96,54 @@ export const resendVerificationEmailServices = async({ email }) => {
     }
 
     return { username : user.username, email: user.email};
+}
+
+export const loginService = async({ email, password }) => {
+    const user = await User.findOne({ email });
+    
+    //User exist or not
+    if(!user) {
+        throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+    }
+
+    //checking user email is verified or not
+    if (!user.isEmailVerified) {
+        throw new ApiError(403, "Please verify your account first", "EMAIL_NOT_VERIFIED")
+    }
+    
+    //checking account status
+    if (user.accountStatus === "blocked") {
+        throw new ApiError(403, "Your account is permanently banned", "USER_BANNED")
+    }
+
+    //check for suspend
+    let wasSuspended = false;
+    if (user.accountStatus === "suspended") {
+        const now = new Date();
+        
+        //suspension time hasn't not passed yet
+        if (user.suspendedUntil && user.suspendedUntil > now) {
+            const istTime = user.suspendedUntil.toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                dateStyle: "medium",
+                timeStyle: "short",
+            });
+            throw new ApiError(403, "Your account is temporarily suspended", "USER_SUSPENDED", {suspendedUntil: istTime, reason: user.statusReason });
+        }
+
+        // if time has passed then 
+        user.accountStatus ="active";
+        user.suspendedUntil = null;
+        user.statusReason = "";
+        await user.save();
+        wasSuspended = true;
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isPasswordCorrect){
+        throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+    }
+
+    return {wasSuspended, user};
 }
