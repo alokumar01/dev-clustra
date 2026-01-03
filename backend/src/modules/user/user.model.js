@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "https://api.dicebear.com/9.x/glass/png",
     },
+    bio: {
+        type: String,
+        trim: true,
+        default: "",
+        maxLength: [160, "Bio can not be more than 160 characters"]
+    },
     role: {
         type: String,
         default: "user",
@@ -54,6 +60,30 @@ const userSchema = new mongoose.Schema({
     emailVerifyExpires: {
         type: Date,
         default: null,
+    },
+    refreshToken: [
+        {
+            token: {
+                type: String,
+                required: true
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ],
+    forgotPasswordHash: {
+        type: String,
+        default: null
+    },
+    forgotPasswordExpires: {
+        type: Date,
+        default: null,
+    },
+    lastUsernameChange: {
+        type: Date,
+        default: Date.now // new user will wait for 14 days 
     }
 
 }, {timestamps: true});
