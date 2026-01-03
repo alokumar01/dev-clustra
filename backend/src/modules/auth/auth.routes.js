@@ -1,5 +1,5 @@
 import express from "express"
-import { loginController, logoutController, resendVerificationEmailController, signupController, verifyEmailController } from "./auth.controller.js"
+import { changePasswordController, forgotPasswordController, loginController, logoutController, refreshAccessTokenController, resendVerificationEmailController, resetPasswordController, signupController, updateProfileController, verifyEmailController } from "./auth.controller.js"
 import limiter from "../../config/rateLimit.js"
 import { protect } from "../../middleswares/auth.middleware.js";
 
@@ -15,7 +15,11 @@ router.get("/me", protect, (req, res) => {
 })
 
 router.get("/logout", logoutController)
-
+router.post("/refresh", refreshAccessTokenController)
+router.patch("/update-profile", protect, limiter, updateProfileController);
+router.post("/change-password", protect, limiter, changePasswordController);
+router.post("/forgot-password", forgotPasswordController);
+router.post("/reset-password", resetPasswordController);
 
 export default router;
 
