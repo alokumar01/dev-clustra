@@ -22,9 +22,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    avatar: {
-        type: String,
-        default: "https://api.dicebear.com/9.x/glass/png",
+    avatar: { 
+        type: String, 
+        default: "https://api.dicebear.com/9.x/glass/png" 
+    },
+    avatarPublicId: { 
+        type: String, 
+        default: null 
     },
     bio: {
         type: String,
