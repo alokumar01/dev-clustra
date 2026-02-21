@@ -1,6 +1,6 @@
 import Message from "./message.model.js"
 import User from "../user/user.model.js"
-import Conversation from "./conversation.model.js";
+import Conversation from "../conversation/conversation.model.js";
 import ApiError from "../../helpers/apiError.js";
 
 
@@ -77,3 +77,4 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
 
     return { message, conversation };
 }
+

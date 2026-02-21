@@ -1,4 +1,4 @@
-import {sendMessageService } from "./message.service.js";
+import { sendMessageService } from "./message.service.js";
 
 export const messageController = async(req, res, next) => {
     try {
@@ -21,3 +21,4 @@ export const messageController = async(req, res, next) => {
         next(error);
     }
 }
+

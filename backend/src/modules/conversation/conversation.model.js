@@ -27,6 +27,6 @@ const conversationSchema = new mongoose.Schema ({
     }
 }, {timestamps: true});
 
-conversationSchema.index({ members: 1 }); // indexing for faster access 
+conversationSchema.index({ participants: 1 }); // indexing for faster access 
 
 export default mongoose.model("Conversation", conversationSchema);
