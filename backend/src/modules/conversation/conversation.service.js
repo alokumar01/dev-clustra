@@ -156,9 +156,7 @@ export const readConversationMessagesService = async(conversationId, userId) => 
         //STEP4: COMMIT
         await session.commitTransaction();
         
-        return {
-            modifiedCount: result.modifiedCount
-        }
+        return {result, readTime};
         
     } catch (error) {
         await session.abortTransaction();

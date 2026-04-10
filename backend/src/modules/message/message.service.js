@@ -2,6 +2,7 @@ import Message from "./message.model.js"
 import User from "../user/user.model.js"
 import Conversation from "../conversation/conversation.model.js";
 import ApiError from "../../helpers/apiError.js";
+import { getIO } from "../../socket.server.js";
 
 
 export const sendMessageService = async(senderId, receiverId, content, type) => {
@@ -60,6 +61,7 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
         deliveredAt: new Date(),
     });
 
+    
     //updating conversation metadata
     const update = {
         lastMessage: message._id,
@@ -69,11 +71,18 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
     if (!isSelfChat) {
         update.$inc = { [`unreadCount.${receiverId}`]: 1};
     }
-
+    
     await Conversation.updateOne(
         {_id: conversation._id},
         update,
+
     )
+    // TESTING SOCKET
+    const io = getIO();
+    io.to(`chat:${conversation._id}`).emit("new_message", {
+        conversationId: conversation._id,
+        message
+    });
 
     return { message, conversation };
 }

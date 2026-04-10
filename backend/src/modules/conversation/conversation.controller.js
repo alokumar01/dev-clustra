@@ -1,5 +1,5 @@
 import { getAllConversationService, getConversationMessagesService, readConversationMessagesService } from "./conversation.service.js";
-
+import { getIO } from "../../socket.server.js";
 // GET ALL CONVERSATION
 export const getAllConversationController = async (req, res, next) => {
     try {
@@ -45,12 +45,19 @@ export const readConversationMessagesController = async(req, res, next) => {
         const { conversationId } = req.params;
         const userId = req.user._id;
         
-        const result = await readConversationMessagesService(conversationId, userId);
+        const {modifiedCount, readTime} = await readConversationMessagesService(conversationId, userId);
+        // socket io initialized for read
+        const io = getIO();
+        io.to(`chat:${conversationId}`).emit("message_read", {
+            conversationId,
+            readerId: userId,
+            readTime
+        });
         
         res.status(200).json({
             success: true,
             message: "Messages read done",
-            data: result.modifiedCount
+            data: modifiedCount
         })
     } catch (error) {
         next(error)
