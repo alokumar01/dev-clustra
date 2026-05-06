@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 export const getAllConversationService = async(userId) => {
     // step 1
     if (!userId) {
-        throw new ApiError();
+        throw new ApiError("");
     }
 
     //step 2; conversatoin me scan karo aur check karo ki kaha par user(logged in) hai
@@ -25,6 +25,16 @@ export const getAllConversationService = async(userId) => {
             (user) => user._id.toString() !== userId.toString()
         );
 
+//         const userIdStr = userId.toString();
+// console.log("====== DEBUG START ======");
+// console.log("userId:", userId);
+// console.log("userIdStr:", userIdStr);
+// console.log("unread object:", conversation.unreadCount);
+// console.log("keys:", Object.keys(conversation.unreadCount || {}));
+// console.log("value with raw:", conversation.unreadCount?.[userId]);
+// console.log("value with string:", conversation.unreadCount?.[userIdStr]);
+// console.log("====== DEBUG END ======");
+
         return {
             _id: conversation._id,
             chatWith: otherUser,
@@ -35,7 +45,9 @@ export const getAllConversationService = async(userId) => {
             } 
             : null, 
             lastMessageAt: conversation.lastMessageAt,
-            unreadCount: conversation.unreadCount?.[userId] || 0
+            unreadCount: conversation.unreadCount.get(userId) ?? 0
+
+            
         };
     });
 
@@ -115,52 +127,63 @@ export const readConversationMessagesService = async(conversationId, userId) => 
     //STEP1: START SESSION
     const session = await mongoose.startSession();
     try {
-        //STEP2: START TRANSACTIONS
-        session.startTransaction();
-    
-        //STEP3: PERFORM OPERATIONS;
-
-        // update many messages readAt
-        // Race Condition (Open Chat + New Message)  RACE CONDITION --> FIX WITH SERVER TIME AND createdAt <= readTime
         const readTime = new Date() // SERVER TIME
-        const result = await Message.updateMany(
-            {
-                conversationId: conversationId,
-                senderId: { $ne: userId },
-                readAt: null,
-                createdAt: { $lte: readTime }
-            },
-            {
-                $set: { readAt: new Date() }
-            },
-            { session }
-        );
+
+        //STEP2: START TRANSACTIONS
+        let finalResult;
+        await session.withTransaction(async () => {
+            //STEP3: PERFORM OPERATIONS;
+
+            // update many messages readAt
+            // Race Condition (Open Chat + New Message)  RACE CONDITION --> FIX WITH SERVER TIME AND createdAt <= readTime
+            const result = await Message.updateMany(
+                {
+                    conversationId: conversationId,
+                    senderId: { $ne: userId },
+                    readAt: null,
+                    createdAt: { $lte: readTime }
+                },
+                {
+                    $set: { readAt: new Date() }
+                },
+                { session }
+            );
             
-        // now the question is, in message readAt update karne ke baad, 
-        // if server crash then conversation me unread count kaise update hoga
-        //SOLUTION --> MONGODB TRANSACTIONS
-
-        // throw new Error("Simulated crash");
-
-        //update conversation unread count
-        await Conversation.updateOne(
-            { _id: conversationId },
-            {
-                $set: { 
-                    [`unreadCount.${userId.toString()}`]: 0 
-                }
-            },
-            { session }
-        )
+            finalResult = {
+                modifiedCount: result.modifiedCount,
+                readTime
+            };
         
-        //STEP4: COMMIT
-        await session.commitTransaction();
+            // now the question is, in message readAt update karne ke baad, 
+            // if server crash then conversation me unread count kaise update hoga
+            //SOLUTION --> MONGODB TRANSACTIONS
+            
+            // throw new Error("Simulated crash");
+            
+            //update conversation unread count
+            await Conversation.updateOne(
+                { _id: conversationId },
+                {
+                    $set: { 
+                        [`unreadCount.${userId.toString()}`]: 0 
+                    }
+                },
+                { session }
+            )
         
-        return {result, readTime};
+            // //STEP4: COMMIT
+            // await session.commitTransaction();
+            // return {modifiedCount: result.modifiedCount, readTime}
+        });
+        
+        // console.log("from service", finalResult)
+        return finalResult;
         
     } catch (error) {
-        await session.abortTransaction();
-        throw ApiError(500, "Failed to mark messages as read", "READ_MESSAGES_TRANSACTION_FAILED", "Mark as Read Transaction Failed")
+        // await session.abortTransaction();
+
+        throw new ApiError(500, "Failed to mark messages as read", "READ_MESSAGES_TRANSACTION_FAILED")
+
     } finally {
         session.endSession();
     }

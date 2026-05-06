@@ -1,5 +1,5 @@
 import { sendMessageService } from "./message.service.js";
-import { getIO } from "../../socket.server.js";
+// import { getIO } from "../../socket.server.js";
 
 export const messageController = async(req, res, next) => {
     try {
@@ -8,18 +8,18 @@ export const messageController = async(req, res, next) => {
         const type = req.body.type;
         const senderId = req.user._id;
         
-        const { message, conversationId } = await sendMessageService(senderId, receiverId, content, type);
+        const { message, conversation } = await sendMessageService(senderId, receiverId, content, type);
         
-        const io = getIO();
-        io.to(`user:${receiverId}`).emit("new_message", message);
-        io.to(`chat:${conversationId}`); // for active chat UI OPTIONAL
+        // const io = getIO();
+        // io.to(`user:${receiverId}`).emit("new_message", message);
+        // io.to(`chat:${conversationId}`); // for active chat UI OPTIONAL
         
         res.status(200).json({
             success: true,
             message: "Message sent",
             data: {
                 message,
-                conversationId,
+                conversationId: conversation._id
             }
         });
     } catch (error) {

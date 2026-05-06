@@ -2,7 +2,7 @@ import Message from "./message.model.js"
 import User from "../user/user.model.js"
 import Conversation from "../conversation/conversation.model.js";
 import ApiError from "../../helpers/apiError.js";
-import { getIO } from "../../socket.server.js";
+import { getIO, getUserSocket } from "../../socket.server.js";
 
 
 export const sendMessageService = async(senderId, receiverId, content, type) => {
@@ -68,8 +68,16 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
         lastMessageAt: new Date(),
     };
     
+    const receiverSocket = getUserSocket(receiverId);
+    const isReceiverActive = receiverSocket && receiverSocket.activeConversation === conversation._id.toString();
+    
     if (!isSelfChat) {
-        update.$inc = { [`unreadCount.${receiverId}`]: 1};
+        if (!isReceiverActive) {
+            update.$inc = { [`unreadCount.${receiverId}`]: 1};
+        } else {
+            update.$set = { [`unreadCount.${receiverId}`]: 0};
+        }
+
     }
     
     await Conversation.updateOne(
@@ -78,10 +86,18 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
 
     )
     // TESTING SOCKET
+
+    // Send to active chat room user
     const io = getIO();
     io.to(`chat:${conversation._id}`).emit("new_message", {
+        ...message.toObject(),
         conversationId: conversation._id,
-        message
+    });
+
+    // send message who is online but not viewing the chat
+    io.to(`user:${receiverId}`).emit("new_message", {
+        ...message.toObject(),
+        conversationId: conversation._id,
     });
 
     return { message, conversation };

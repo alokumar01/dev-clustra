@@ -1,0 +1,16 @@
+
+services:
+
+  frontend:
+    image: aalokumar01/dev-clustra-frontend:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./client/.env.docker
+
+  backend:
+    image: aalokumar01/dev-clustra-backend:latest
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env

@@ -45,19 +45,20 @@ export const readConversationMessagesController = async(req, res, next) => {
         const { conversationId } = req.params;
         const userId = req.user._id;
         
-        const {modifiedCount, readTime} = await readConversationMessagesService(conversationId, userId);
+        const result = await readConversationMessagesService(conversationId, userId);
+        // console.log("result from service", result)
         // socket io initialized for read
         const io = getIO();
         io.to(`chat:${conversationId}`).emit("message_read", {
             conversationId,
             readerId: userId,
-            readTime
+            readTime: result.readTime
         });
         
         res.status(200).json({
             success: true,
             message: "Messages read done",
-            data: modifiedCount
+            data: result.modifiedCount
         })
     } catch (error) {
         next(error)
