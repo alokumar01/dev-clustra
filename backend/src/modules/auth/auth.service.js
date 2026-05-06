@@ -14,7 +14,15 @@ export const signupService = async({ username, email, password })  => {
     });
 
     if(existingUser) {
-        throw new ApiError(409, "User already exist!", "USER_ALREADY_EXISTS");
+        if (existingUser.email === email) {
+            throw new ApiError(400, "Email already exists", "EMAIL_EXISTS")
+        }
+
+        if (existingUser.username === username) {
+            throw new ApiError(400, "Username already taken", "USERNAME_EXISTS")
+        }
+
+        // throw new ApiError(409, "User already exist!", "USER_ALREADY_EXISTS");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);

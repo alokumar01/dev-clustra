@@ -78,16 +78,16 @@ export const loginController = async (req, res, next) => {
         //jwt access token only with user._id into cookies, short lived token
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 15 * 60,
+            secure: NODE_ENV === 'production',
+            maxAge: 15 * 60 * 1000,
             sameSite: "strict"
         } )
         
         // jwt refresh token into cookies, longer time token only used when accessToken expires
         res.cookie("refreshToken", refreshToken, { 
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 7 *  24 * 60 * 60,
+            secure: NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
             sameSite: "strict"
         })                
         
@@ -154,7 +154,7 @@ export const refreshAccessTokenController = async (req, res, next) => {
         }
 
         //setting tokens to browser
-        res.cookie("accessToken", accessToken, { ...cookieOption, maxAge: 15 * 60 * 1000 });
+        res.cookie("accessToken", accessToken, { ...cookieOption, maxAge:  15 * 60 * 1000 });
         res.cookie("refreshToken", refreshToken, {...cookieOption, maxAge: 7 * 24 * 60 * 60 * 1000 });
         
         res.status(200).json({
@@ -232,15 +232,16 @@ export const forgotPasswordController = async (req, res, next) => {
 //Reset password after sending token to user
 export const resetPasswordController = async (req, res, next) => {
     try {
-        const { token } = req.query;
-        const { newPassword } = req.body;
+        // const { token } = req.query;
+        // const { newPassword } = req.body; // we have to chagne this 
+        const { token, newPassword } = req.body;
 
         if (!token) {
-            throw new ApiError(404, "Token not found", "RESET_TOKEN_NOT_FOUND");
+            throw new ApiError(400, "Token not found", "RESET_TOKEN_NOT_FOUND");
         }
 
         if (!newPassword) {
-            throw new ApiError(404, "New password is required", "PASSWORD_REQUIRED");
+            throw new ApiError(400, "New password is required", "PASSWORD_REQUIRED");
         }
 
         await resetPasswordService({ token, newPassword });
