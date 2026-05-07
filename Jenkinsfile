@@ -8,13 +8,6 @@ pipeline {
 
     stages {
 
-        stage('Clone Repository') {
-            steps {
-                git branch: 'main',
-                url: 'https://github.com/alokumar01/dev-clustra.git'
-            }
-        }
-
         stage('Build Frontend Image') {
             steps {
                 sh 'docker build -t $FRONTEND_IMAGE ./client'
