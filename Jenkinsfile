@@ -53,6 +53,7 @@ pipeline {
                 sh 'docker push $BACKEND_IMAGE'
             }
         }
+        
 
     }
 
