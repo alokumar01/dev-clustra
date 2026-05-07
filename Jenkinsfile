@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        FRONTEND_IMAGE = "aalokumar01/dev-clustra-frontend:latest"
-        BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:latest"
+        FRONTEND_IMAGE = "aalokumar01/dev-clustra-frontend:${BUILD_NUMBER}"
+        BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
     }
 
     stages {
@@ -53,7 +53,7 @@ pipeline {
                 sh 'docker push $BACKEND_IMAGE'
             }
         }
-        
+
 
     }
 
