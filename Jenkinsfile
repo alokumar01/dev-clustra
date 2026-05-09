@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 environment {
     BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
     EC2_HOST = "13.233.108.144"
@@ -68,6 +67,5 @@ post {
     }
 
 }
-```
 
 }
