@@ -17,7 +17,7 @@ export const initSocket = (server) => {
     console.log("Socket server initialized");
     io = new Server(server, {
         cors: {
-            origin: "http://localhost:3000",
+            origin: process.env.FRONTEND_URL,
             credentials: true
         },
     });

@@ -1,7 +1,7 @@
 import { NODE_ENV } from "../../config/env.js";
 import ApiError from "../../helpers/apiError.js";
 import { resendVerificationEmailService, signupService, verifyEmailService, loginService, logoutService, refreshAccessTokenService, updateProfileService, changePasswordService, forgotPasswordService, resetPasswordService } from "./auth.service.js";
-
+import { cookieOptions } from "../../config/cors.js"
 
 export const signupController = async (req, res, next) => { // Controller ka kaam hai HTTP data extract karna
     try {
@@ -77,18 +77,14 @@ export const loginController = async (req, res, next) => {
 
         //jwt access token only with user._id into cookies, short lived token
         res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: NODE_ENV === 'production',
+            ...cookieOptions,
             maxAge: 15 * 60 * 1000,
-            sameSite: "strict"
         } )
         
         // jwt refresh token into cookies, longer time token only used when accessToken expires
         res.cookie("refreshToken", refreshToken, { 
-            httpOnly: true,
-            secure: NODE_ENV === 'production',
+            ...cookieOptions,
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: "strict"
         })                
         
         let message = "Login Successful!, Happy to see you!";
@@ -120,11 +116,8 @@ export const logoutController = async (req, res, next) => {
 
         await logoutService({ refreshToken })
 
-        res.clearCookie('accessToken', {
-            httpOnly: true,
-            secure: NODE_ENV === 'production',
-            sameSite: "strict"
-        });
+        res.clearCookie("accessToken", cookieOption);
+        res.clearCookie("refreshToken", cookieOption);
 
         res.status(200).json({
             success: true,
@@ -149,9 +142,10 @@ export const refreshAccessTokenController = async (req, res, next) => {
         
         const cookieOption = {
             httpOnly: true,
-            secure: NODE_ENV === 'production',
-            sameSite: "strict",
-        }
+            secure: NODE_ENV === "production",
+            sameSite: NODE_ENV === "production" ? "none" : "lax",
+            domain: NODE_ENV === "production" ? ".aalokkumar.dev" : undefined,
+        };
 
         //setting tokens to browser
         res.cookie("accessToken", accessToken, { ...cookieOption, maxAge:  15 * 60 * 1000 });
