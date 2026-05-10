@@ -289,7 +289,8 @@ export const forgotPasswordService = async ({ email }) => {
         });
         
     } catch (error) {
-        throw new ApiError(500, "Failed to sent reset link")
+        console.error("Forgot password email error:", error);
+        throw new ApiError(500, "Failed to send reset link", "EMAIL_SEND_FAILED")
     }
 }
 

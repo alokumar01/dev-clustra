@@ -30,7 +30,7 @@ export const verifyEmailController = async (req, res, next) => {
             });
         }
 
-        const result = await verifyEmailService({ token });
+        await verifyEmailService({ token });
         // const {username, email, isEmailVerified} = result.user;
 
         res.status(200).json({
@@ -116,8 +116,8 @@ export const logoutController = async (req, res, next) => {
 
         await logoutService({ refreshToken })
 
-        res.clearCookie("accessToken", cookieOption);
-        res.clearCookie("refreshToken", cookieOption);
+        res.clearCookie("accessToken", cookieOptions);
+        res.clearCookie("refreshToken", cookieOptions);
 
         res.status(200).json({
             success: true,
@@ -165,7 +165,7 @@ export const updateProfileController = async (req, res, next) => {
     try {
         const { username, bio } = req.body;
         
-        const updatedUser = await updateProfileService({
+        await updateProfileService({
             userId: req.user._id,
             newUsername: username,
             newBio: bio
@@ -186,7 +186,7 @@ export const changePasswordController = async(req, res, next) => {
     try {
         const { oldPassword, newPassword } = req.body;
 
-        const data = await changePasswordService({
+        await changePasswordService({
             userId: req.user._id,
             oldPassword: oldPassword,
             newPassword: newPassword

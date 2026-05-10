@@ -181,7 +181,7 @@ export const readConversationMessagesService = async(conversationId, userId) => 
         
     } catch (error) {
         // await session.abortTransaction();
-
+        console.error("message read failed ", error);
         throw new ApiError(500, "Failed to mark messages as read", "READ_MESSAGES_TRANSACTION_FAILED")
 
     } finally {

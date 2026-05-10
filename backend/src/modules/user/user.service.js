@@ -1,5 +1,4 @@
 import User from "./user.model.js"
-import ApiError from "../../helpers/apiError.js"
 
 export const searchUsersService = async (searchTerm, currentUserId) => {
     const query = {

@@ -1,8 +1,9 @@
-import ApiError from "../helpers/apiError.js"
+import ApiError from "../helpers/apiError.js";
 
-const errorMiddleware = (err, req, res, next) => {
+const errorMiddleware = (err, req, res) => {
+
     if (err instanceof ApiError) {
-        return res.status(err.status).json({
+        return res.status(err.statusCode).json({
             success: false,
             message: err.message,
             code: err.code,
@@ -10,7 +11,8 @@ const errorMiddleware = (err, req, res, next) => {
         });
     }
 
-    //falllback error
+    console.error(err); // useful for debugging
+
     return res.status(500).json({
         success: false,
         message: "Internal Server Error",

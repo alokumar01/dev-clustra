@@ -1,0 +1,70 @@
+pipeline {
+
+    agent any
+
+    parameters {
+
+        string(
+            name: 'IMAGE_TAG',
+            defaultValue: 'latest',
+            description: 'Docker image tag to deploy'
+        )
+
+    }
+
+    environment {
+
+        EC2_HOST = "13.233.108.144"
+
+        BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${params.IMAGE_TAG}"
+
+    }
+
+    stages {
+
+        stage('Deploy To Production EC2') {
+
+            steps {
+
+                sh """
+                ssh ubuntu@$EC2_HOST '
+                    cd ~/devclustra && \
+                    sed -i "s|image: .*|image: $BACKEND_IMAGE|" docker-compose.yml && \
+                    docker compose pull && \
+                    docker compose up -d
+                '
+                """
+
+            }
+
+        }
+
+        stage('Production Health Check') {
+
+            steps {
+
+                sh '''
+                sleep 10
+
+                curl -f https://api.devclustra.aalokkumar.dev/health
+                '''
+
+            }
+
+        }
+
+    }
+
+    post {
+
+        success {
+            echo 'Production deployment successful!'
+        }
+
+        failure {
+            echo 'Deployment failed!'
+        }
+
+    }
+
+}

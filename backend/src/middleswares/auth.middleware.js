@@ -42,13 +42,17 @@ export const protect = async (req, res, next) => {
 export const refreshTokenController = async (req, res, next) => {
     try {
         const rftoken = req.cookies.refreshToken;
-        if(!rftoken) throw new ApiError(401, "You are not logged in. Please login to refresh token.", "UNAUTHORIZED")
+
+        if(!rftoken) 
+            throw new ApiError(401, "You are not logged in. Please login to refresh token.", "UNAUTHORIZED")
+
         const decodedToken = jwt.verify(rftoken, JWT_REFRESH_SECRET)
-        if(!decodedToken) throw new ApiError(402,"You are not logged in. Please login to refresh token.", "UNAUTHORIZED" )
+
+        if(!decodedToken) 
+            throw new ApiError(402,"You are not logged in. Please login to refresh token.", "UNAUTHORIZED" )
         
         
     } catch (error) {
-        
+        next(error)
     }
-    next(null);
 }
