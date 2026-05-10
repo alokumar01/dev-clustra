@@ -11,7 +11,7 @@ pipeline {
         stage('Backend Install Dependencies') {
             steps {
                 dir('backend') {
-                    sh 'pnpm install --ignore-scripts=false'
+                    sh 'pnpm install'
                 }
             }
         }
@@ -36,7 +36,7 @@ pipeline {
         stage('Frontend Install Dependencies') {
             steps {
                 dir('client') {
-                    sh 'pnpm install --ignore-scripts=false'
+                    sh 'pnpm install'
                 }
             }
         }
