@@ -1,71 +1,113 @@
 pipeline {
-agent any
 
-environment {
-    BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
-    EC2_HOST = "13.233.108.144"
-}
+    agent any
 
-stages {
-
-
-
-    stage('Build Backend Docker Image') {
-        steps {
-            sh '''
-            docker build -t $BACKEND_IMAGE ./backend
-            '''
-        }
+    environment {
+        BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
     }
 
-    stage('DockerHub Login') {
-        steps {
-            withCredentials([usernamePassword(
-                credentialsId: 'dockerhub-creds',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-            )]) {
+    stages {
 
-                sh '''
-                echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                '''
+        stage('Backend Install Dependencies') {
+            steps {
+                dir('backend') {
+                    sh 'pnpm install'
+                }
             }
         }
-    }
 
-    stage('Push Backend Image') {
-        steps {
-            sh '''
-            docker push $BACKEND_IMAGE
-            '''
+        stage('Backend Lint') {
+            steps {
+                dir('backend') {
+                    sh 'pnpm lint'
+                }
+            }
         }
-    }
 
-    stage('Deploy To Production EC2') {
-        steps {
-            sh """
-            ssh ubuntu@$EC2_HOST '
-                cd ~/devclustra && \
-                sed -i "s|image: .*|image: $BACKEND_IMAGE|" docker-compose.yml && \
-                docker compose pull && \
-                docker compose up -d
-            '
-            """
+        stage('Backend Tests') {
+            steps {
+                dir('backend') {
+                    sh 'pnpm test'
+                }
+            }
         }
+
+        stage('Frontend Install Dependencies') {
+            steps {
+                dir('client') {
+                    sh 'pnpm install'
+                }
+            }
+        }
+
+        stage('Frontend Lint') {
+            steps {
+                dir('client') {
+                    sh 'pnpm lint'
+                }
+            }
+        }
+
+        stage('Frontend Build') {
+            steps {
+                dir('client') {
+                    sh 'pnpm build'
+                }
+            }
+        }
+
+        stage('Build Backend Docker Image') {
+            steps {
+
+                sh '''
+                docker build -t $BACKEND_IMAGE ./backend
+                '''
+
+            }
+        }
+
+        stage('DockerHub Login') {
+
+            steps {
+
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    '''
+
+                }
+
+            }
+
+        }
+
+        stage('Push Backend Docker Image') {
+            steps {
+
+                sh '''
+                docker push $BACKEND_IMAGE
+                '''
+
+            }
+        }
+
     }
 
-}
+    post {
 
-post {
+        success {
+            echo 'CI pipeline completed successfully!'
+        }
 
-    success {
-        echo 'Production deployment completed successfully!'
+        failure {
+            echo 'CI pipeline failed!'
+        }
+
     }
-
-    failure {
-        echo 'Pipeline failed!'
-    }
-
-}
 
 }
