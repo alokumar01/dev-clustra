@@ -14,7 +14,7 @@ pipeline {
 
     environment {
 
-        EC2_HOST = "13.233.108.144"
+        EC2_HOST = "13.200.61.98"
 
         BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${params.IMAGE_TAG}"
 
@@ -22,16 +22,28 @@ pipeline {
 
     stages {
 
-        stage('Deploy To Production EC2') {
+        stage('Deploy To Kubernetes') {
 
             steps {
 
                 sh """
                 ssh ubuntu@$EC2_HOST '
-                    cd ~/devclustra && \
-                    sed -i "s|image: .*|image: $BACKEND_IMAGE|" docker-compose.yml && \
-                    docker compose pull && \
-                    docker compose up -d
+                    sudo kubectl set image deployment/devclustra-backend \
+                    backend=$BACKEND_IMAGE
+                '
+                """
+
+            }
+
+        }
+
+        stage('Wait For Rollout') {
+
+            steps {
+
+                sh """
+                ssh ubuntu@$EC2_HOST '
+                    sudo kubectl rollout status deployment/devclustra-backend
                 '
                 """
 
@@ -46,7 +58,7 @@ pipeline {
                 sh '''
                 sleep 10
 
-                curl -f https://api.devclustra.aalokkumar.dev/health
+                curl -f http://13.200.61.98:31935/health
                 '''
 
             }
@@ -58,11 +70,11 @@ pipeline {
     post {
 
         success {
-            echo 'Production deployment successful!'
+            echo 'Kubernetes deployment successful!'
         }
 
         failure {
-            echo 'Deployment failed!'
+            echo 'Kubernetes deployment failed!'
         }
 
     }

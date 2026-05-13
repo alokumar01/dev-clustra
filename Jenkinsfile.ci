@@ -30,7 +30,6 @@ pipeline {
                     sh 'pnpm test'
                 }
             }
-            
         }
 
         stage('Frontend Install Dependencies') {
@@ -40,7 +39,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Frontend Lint') {
             steps {
                 dir('client') {
@@ -59,16 +58,13 @@ pipeline {
 
         stage('Build Backend Docker Image') {
             steps {
-
                 sh '''
                 docker build -t $BACKEND_IMAGE ./backend
                 '''
-
             }
         }
 
         stage('DockerHub Login') {
-
             steps {
 
                 withCredentials([usernamePassword(
@@ -84,15 +80,28 @@ pipeline {
                 }
 
             }
-
         }
 
         stage('Push Backend Docker Image') {
             steps {
-
                 sh '''
                 docker push $BACKEND_IMAGE
                 '''
+            }
+        }
+
+        stage('Trigger CD Pipeline') {
+            steps {
+
+                build job: 'DevClustra-CD',
+                wait: false,
+
+                parameters: [
+                    string(
+                        name: 'IMAGE_TAG',
+                        value: "${BUILD_NUMBER}"
+                    )
+                ]
 
             }
         }
@@ -100,6 +109,10 @@ pipeline {
     }
 
     post {
+
+        always {
+            sh 'docker logout || true'
+        }
 
         success {
             echo 'CI pipeline completed successfully!'

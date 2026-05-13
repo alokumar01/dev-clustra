@@ -60,7 +60,7 @@ export default function Hero() {
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-pink-400 to-red-400 rounded-xl blur-lg opacity-70 group-hover:opacity-100 transition"></div>
 
             <Button className="relative px-8 py-6 text-lg rounded-xl">
-                Join Us and connect with you friends``
+                Join Us and connect with you friends...
             </Button>
           </div>
         </div>
