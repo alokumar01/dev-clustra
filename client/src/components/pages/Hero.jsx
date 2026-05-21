@@ -51,8 +51,7 @@ export default function Hero() {
 
           {/* Description */}
           <p className="mt-6 text-gray-600 max-w-md mx-auto">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Vehicula massa in enim luctus.
+            Mainly Designed for small team and developer.
           </p>
 
           {/* CTA with glow effect */}
