@@ -80,3 +80,40 @@ export async function resetPassword(token, newPassword) {
     throw error;
   }
 }
+
+// SERVER FETCH CURRENT USER (SERVER COMPONENT)
+
+
+// Update profile avatar
+export async function updateAvatar(formData) {
+  try {
+
+    const response = await api.patch("/user/update-avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    
+    return response.data;
+
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Update profile
+
+export async function updateProfile({ username, bio }) {
+  try {
+
+    const response = await api.patch("/auth/update-profile", {
+      username: username,
+      bio: bio
+    })
+
+    return response.data;
+
+  } catch (error) {
+    throw error;
+  }
+}

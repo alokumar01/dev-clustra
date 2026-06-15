@@ -165,7 +165,7 @@ export const updateProfileController = async (req, res, next) => {
     try {
         const { username, bio } = req.body;
         
-        await updateProfileService({
+        const updatedUser = await updateProfileService({
             userId: req.user._id,
             newUsername: username,
             newBio: bio
@@ -174,6 +174,7 @@ export const updateProfileController = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "Profile updated succesfully",
+            data: updatedUser
         });
 
     } catch (error) {

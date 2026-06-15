@@ -29,7 +29,7 @@ export default function ChatBubble({ message, selectedChat }) {
           <div
             className={`px-4 py-2 rounded-2xl text-sm mt-1 ${
               isMe
-                ? "bg-gradient-to-r from-orange-400 to-orange-600 text-white rounded-br-none"
+                ? "bg-linear-to-r from-orange-400 to-orange-600 text-white rounded-br-none"
                 : "bg-gray-200 text-gray-800 rounded-bl-none"
             }`}
           >
