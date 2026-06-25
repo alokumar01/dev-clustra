@@ -9,7 +9,6 @@ pipeline {
     environment {
         BACKEND_IMAGE  = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "aalokumar01/dev-clustra-frontend:${BUILD_NUMBER}"
-        DOCKER_BUILDKIT = "1"
     }
 
     stages {
