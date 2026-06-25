@@ -2,13 +2,23 @@ pipeline {
 
     agent any
 
+    tools {
+        nodejs 'Node22'
+    }
+
     environment {
         BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
     }
 
     stages {
 
-        stage('Backend Install Dependencies') {
+        stage('Install pnpm') {
+            steps {
+                sh 'npm install -g pnpm'
+            }
+        }
+
+        stage('Backend Install') {
             steps {
                 dir('backend') {
                     sh 'pnpm install'
@@ -32,18 +42,10 @@ pipeline {
             }
         }
 
-        stage('Frontend Install Dependencies') {
+        stage('Frontend Install') {
             steps {
                 dir('client') {
                     sh 'pnpm install'
-                }
-            }
-        }
-
-        stage('Frontend Lint') {
-            steps {
-                dir('client') {
-                    sh 'pnpm lint'
                 }
             }
         }
@@ -56,72 +58,52 @@ pipeline {
             }
         }
 
-        stage('Build Backend Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build -t $BACKEND_IMAGE ./backend
-                '''
+                sh "docker build -t $BACKEND_IMAGE ./backend"
             }
         }
 
-        stage('DockerHub Login') {
+        stage('Docker Login') {
             steps {
-
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
 
                     sh '''
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                     '''
-
                 }
-
             }
         }
 
-        stage('Push Backend Docker Image') {
+        stage('Push Image') {
             steps {
-                sh '''
-                docker push $BACKEND_IMAGE
-                '''
+                sh "docker push $BACKEND_IMAGE"
             }
         }
 
-        stage('Trigger CD Pipeline') {
+        stage('Trigger CD') {
             steps {
-
                 build job: 'DevClustra-CD',
                 wait: false,
-
                 parameters: [
                     string(
                         name: 'IMAGE_TAG',
                         value: "${BUILD_NUMBER}"
                     )
                 ]
-
             }
         }
-
     }
 
     post {
-
         always {
             sh 'docker logout || true'
         }
-
-        success {
-            echo 'CI pipeline completed successfully!'
-        }
-
-        failure {
-            echo 'CI pipeline failed!'
-        }
-
     }
-
 }

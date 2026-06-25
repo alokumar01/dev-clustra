@@ -3,80 +3,55 @@ pipeline {
     agent any
 
     parameters {
-
         string(
             name: 'IMAGE_TAG',
-            defaultValue: 'latest',
-            description: 'Docker image tag to deploy'
+            defaultValue: 'latest'
         )
-
     }
 
     environment {
-
         EC2_HOST = "13.200.61.98"
-
         BACKEND_IMAGE = "aalokumar01/dev-clustra-backend:${params.IMAGE_TAG}"
-
     }
 
     stages {
 
-        stage('Deploy To Kubernetes') {
+        stage('Deploy') {
 
             steps {
 
-                sh """
-                ssh ubuntu@$EC2_HOST '
+                sshagent(['ec2-ssh-key']) {
+
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
                     sudo kubectl set image deployment/devclustra-backend \
                     backend=$BACKEND_IMAGE
-                '
-                """
-
+                    '
+                    """
+                }
             }
-
         }
 
-        stage('Wait For Rollout') {
+        stage('Wait Rollout') {
 
             steps {
 
-                sh """
-                ssh ubuntu@$EC2_HOST '
+                sshagent(['ec2-ssh-key']) {
+
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
                     sudo kubectl rollout status deployment/devclustra-backend
-                '
-                """
-
+                    '
+                    """
+                }
             }
-
         }
 
-        stage('Production Health Check') {
+        stage('Health Check') {
 
             steps {
-
-                sh '''
-                sleep 10
-
-                curl -f http://13.200.61.98:31935/health
-                '''
-
+                sh 'curl -f http://13.200.61.98:31935/health'
             }
-
         }
-
     }
-
-    post {
-
-        success {
-            echo 'Kubernetes deployment successful!'
-        }
-
-        failure {
-            echo 'Kubernetes deployment failed!'
-        }
-
-    }
-
 }
