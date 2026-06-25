@@ -14,7 +14,11 @@ pipeline {
 
         stage('Install pnpm') {
             steps {
-                sh 'npm install -g pnpm'
+                sh '''
+                    corepack enable
+                    corepack prepare pnpm@11.9.0 --activate
+                    pnpm install --frozen-lockfile
+                '''
             }
         }
 
