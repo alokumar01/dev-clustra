@@ -108,7 +108,7 @@ pipeline {
 
         stage('Trigger CD') {
             steps {
-                build job: 'DevClustra-CD',
+                build job: 'DevClustra CD',
                     wait: false,
                     parameters: [
                         string(
