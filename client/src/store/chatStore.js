@@ -4,14 +4,14 @@ export const useChatStore = create((set, get) => ({
   conversations: [],
   selectedChat: null,
   messagesByConversation: {},
-
-
-
+  
   // NEW: online users
   onlineUsers: new Set(),
 
   setOnlineUsers: (users) =>
-    set({ onlineUsers: new Set(users) }),
+    set({
+      onlineUsers: new Set(users)
+    }),
 
   addOnlineUser: (userId) =>
     set((state) => {
@@ -77,7 +77,7 @@ export const useChatStore = create((set, get) => ({
         .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
       return { conversations };
     }),
-  
+
   // Handle incoming socket message with correct unreadCount logic
   handleIncomingMessage: (msg, isActive) =>
     set((state) => {

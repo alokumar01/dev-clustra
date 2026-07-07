@@ -7,8 +7,8 @@ import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.js"
 import jwt from "jsonwebtoken"
 import { JWT_REFRESH_SECRET } from "../../config/env.js";
 
-//// service, object receive karti hai, services db se talk karti hai, means business logic 
-export const signupService = async({ username, email, password })  => {  
+//// service, object receive karti hai, services db se talk karti hai, means business logic
+export const signupService = async({ username, email, password })  => {
     const existingUser = await User.findOne({
         $or: [{ email }, { username }]
     });
@@ -38,7 +38,7 @@ export const signupService = async({ username, email, password })  => {
     user.emailVerifyHash = hash;
     user.emailVerifyExpires = Date.now() + 10 * 60 * 1000; //10 minutes
     await user.save();
-    
+
     try {
         await sendVerificationEmail({
             username: user.username,
@@ -46,7 +46,7 @@ export const signupService = async({ username, email, password })  => {
             token: emailToken,
             type: "signup"
         })
-        
+
     } catch (error) {
         console.info('email failed', error);
     }
@@ -66,7 +66,7 @@ export const verifyEmailService = async({ token }) => {
     });
 
     if (!user) throw new ApiError(400, "This link is invalid or has already been used. Request new ones from login page", "TOKEN_EXPIRED");
-    
+
     if (user.emailVerifyExpires < Date.now()) {
         throw new ApiError(401, "Token expired please request a new one.", "TOKEN_EXPIRED");
     }
@@ -82,7 +82,7 @@ export const verifyEmailService = async({ token }) => {
 
 export const resendVerificationEmailService = async({ email }) => {
     const user = await User.findOne({ email })
-    
+
     if (!user) return;
 
     if (user.isEmailVerified) {
@@ -111,7 +111,7 @@ export const resendVerificationEmailService = async({ email }) => {
 
 export const loginService = async({ email, password }) => {
     const user = await User.findOne({ email });
-    
+
     //User exist or not
     if(!user) {
         throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
@@ -121,7 +121,7 @@ export const loginService = async({ email, password }) => {
     if (!user.isEmailVerified) {
         throw new ApiError(403, "Please verify your account first", "EMAIL_NOT_VERIFIED")
     }
-    
+
     //checking account status
     if (user.accountStatus === "blocked") {
         throw new ApiError(403, "Your account is permanently banned", "USER_BANNED")
@@ -131,7 +131,7 @@ export const loginService = async({ email, password }) => {
     let wasSuspended = false;
     if (user.accountStatus === "suspended") {
         const now = new Date();
-        
+
         //suspension time hasn't not passed yet
         if (user.suspendedUntil && user.suspendedUntil > now) {
             const istTime = user.suspendedUntil.toLocaleString("en-IN", {
@@ -142,7 +142,7 @@ export const loginService = async({ email, password }) => {
             throw new ApiError(403, "Your account is temporarily suspended", "USER_SUSPENDED", {suspendedUntil: istTime, reason: user.statusReason });
         }
 
-        // if time has passed then 
+        // if time has passed then
         user.accountStatus ="active";
         user.suspendedUntil = null;
         user.statusReason = "";
@@ -171,9 +171,9 @@ export const loginService = async({ email, password }) => {
 export const logoutService = async({ refreshToken }) => {
     await User.updateOne(
         { "refreshToken.token": refreshToken},
-        { 
+        {
             $pull: {
-                refreshToken: { token: refreshToken } 
+                refreshToken: { token: refreshToken }
             }
         }
     )
@@ -181,33 +181,73 @@ export const logoutService = async({ refreshToken }) => {
 
 export const refreshAccessTokenService = async({ oldRfToken }) => {
     //verify the token, throws error if expired or anything else
+    // console.log("cookies token:", oldRfToken)
     const decode = jwt.verify(oldRfToken, JWT_REFRESH_SECRET)
-    
-    //find the user and check the specfic token
+
+    // find the user and check the specfic token
     const user = await User.findOne({
         _id: decode.sub,
         "refreshToken.token": oldRfToken // checking this token exisits in array or not
     });
 
+    // const user = await User.findById(decode.sub);
+    // console.log("Cookie token:", oldRfToken);
+    // console.log(
+    //     "Exists in DB:",
+    //     user.refreshToken.some(rt => rt.token === oldRfToken)
+    // );
+
     if (!user) {
         throw new ApiError(401, "Invalid refresh token", "INVALID_REFRESH_TOKEN");
     }
 
-    //ROTATION LOGIC, remove old token 
+    //ROTATION LOGIC, remove old token
     user.refreshToken = user.refreshToken.filter(
-        rt => rt.token != oldRfToken
+        rt => rt.token !== oldRfToken
     );
 
     //sab sahi hai, then me generate dono token generate kar raha hu
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
+    // console.log("Generated:", refreshToken);
 
     //saving refreshtoken to db
     user.refreshToken.push({ token: refreshToken });
     await user.save();
 
+    // console.log("Saved:", user.refreshToken[user.refreshToken.length - 1].token);
+
     return { accessToken, refreshToken };
 }
+
+// export const refreshAccessTokenService = async ({ oldRfToken }) => {
+//     console.log("Cookie token:", oldRfToken);
+
+//     let decode;
+
+//     try {
+//         decode = jwt.verify(oldRfToken, JWT_REFRESH_SECRET);
+//         console.log("Decoded:", decode);
+//     } catch (err) {
+//         console.log("JWT Verify Error:", err.name, err.message);
+//         throw err;
+//     }
+
+//     const user = await User.findOne({
+//         _id: decode.sub,
+//         "refreshToken.token": oldRfToken,
+//     });
+
+//     console.log("User found:", !!user);
+
+//     if (!user) {
+//         throw new ApiError(
+//             401,
+//             "Invalid refresh token",
+//             "INVALID_REFRESH_TOKEN"
+//         );
+//     }
+// }
 
 //updat profile service
 export const updateProfileService = async({ userId, newUsername, newBio }) => {
@@ -215,7 +255,7 @@ export const updateProfileService = async({ userId, newUsername, newBio }) => {
     //user exist or not
     if (!user)  throw new ApiError(404, "User not found", "USER_NOT_FOUND");
 
-    //doing interval check 
+    //doing interval check
     if (newUsername && newUsername !== user.username) {
         const fourteenInMs = 14 * 24 * 60 * 60 * 1000;
         const lastChanged = Date.now() - (user.lastUsernameChange || 0);
@@ -223,11 +263,11 @@ export const updateProfileService = async({ userId, newUsername, newBio }) => {
         if( lastChanged < fourteenInMs) {
             throw new ApiError(403, "You can only change your username once every 14 days", "USERNAME_NOT_CHANGED");
         }
-        
+
         //searching the new username in our db;
         const isTaken = await User.findOne({ username: newUsername, _id: { $ne: user._id} });
         if (isTaken) throw new ApiError(409, "This username is already taken", "USERNAME_ALREADY_TAKEN");
-        
+
         //update the user name
         user.username = newUsername;
         user.lastUsernameChange = Date.now();
@@ -245,7 +285,7 @@ export const updateProfileService = async({ userId, newUsername, newBio }) => {
 //change password
 export const changePasswordService = async({ userId, oldPassword, newPassword }) => {
     const user = await User.findById(userId).select("+passwordHash");
-    
+
     if (!user) throw new ApiError(404, "User not found", "USER_NOT_FOUND");
 
     //comparing old password
@@ -255,7 +295,7 @@ export const changePasswordService = async({ userId, oldPassword, newPassword })
     }
 
     if (oldPassword === newPassword) {
-        throw new ApiError(400, "New password cannot be the same as the old one", "");   
+        throw new ApiError(400, "New password cannot be the same as the old one", "");
     }
 
     //hash the new password
@@ -278,16 +318,16 @@ export const forgotPasswordService = async ({ email }) => {
 
     const { resetToken, hash } = generateForgotPasswordToken();
     user.forgotPasswordHash = hash;
-    user.forgotPasswordExpires = Date.now() + 10 * 60 * 1000 
+    user.forgotPasswordExpires = Date.now() + 10 * 60 * 1000
     await user.save();
 
-    try {     
+    try {
         await sendResetPasswordEmail({
             username: user.username,
             email: email,
             token: resetToken
         });
-        
+
     } catch (error) {
         console.error("Forgot password email error:", error);
         throw new ApiError(500, "Failed to send reset link", "EMAIL_SEND_FAILED")
@@ -306,7 +346,7 @@ export const resetPasswordService = async ({ token, newPassword }) => {
     if (!user) throw new ApiError(400, "Token is invalid or expired.", "RESET_TOKEN_EXPIRED");
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
-    
+
     user.forgotPasswordExpires = undefined;
     user.forgotPasswordHash = undefined;
     user.refreshToken = []; //force logout on all devices

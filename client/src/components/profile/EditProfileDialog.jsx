@@ -105,7 +105,7 @@ export default function EditProfileDialog({ user }) {
       }
 
       // Refresh zustand user
-      // await getMe();
+      await getMe();
 
       toast.success(
         "Profile updated successfully"
@@ -130,7 +130,7 @@ export default function EditProfileDialog({ user }) {
       onOpenChange={setOpen}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="primary">
           Edit Profile
         </Button>
       </DialogTrigger>
@@ -141,7 +141,7 @@ export default function EditProfileDialog({ user }) {
       >
         <DialogHeader>
           <DialogTitle>
-            Edit Profile
+            Edit Profile Dupliate
           </DialogTitle>
         </DialogHeader>
 
