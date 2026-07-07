@@ -14,6 +14,7 @@ import { socket } from "@/store/socketStore"
 
 export default function ChatScreen({ selectedChat }) {
   const user = useAuthStore((state) => state.user);
+  // console.log("user from chat screen:", user)
   const emptyMessages = useRef([]);
   const messages = useChatStore((state) =>
     selectedChat?._id
@@ -32,8 +33,10 @@ export default function ChatScreen({ selectedChat }) {
   const updateConversationMeta = useChatStore(
     (state) => state.updateConversationMeta
   );
+
   const [content, setContent] = useState("");
-  const isOnline = useChatStore((state) => state.isUserOnline(user?._id));
+  // isonline ko chat header me jisse baat karna hai uska data bhejna hai not user id
+  const isOnline = useChatStore((state) => state.isUserOnline(selectedChat?.chatWith?._id));
 
   // this useEffect for SOCKET IO LISTENING FOR JOIN ROOMS
   useEffect(() => {
@@ -42,7 +45,7 @@ export default function ChatScreen({ selectedChat }) {
     // join room
     socket.emit("join_conversation", selectedChat._id);
 
-    // clean up 
+    // clean up
     return () => {
       socket.emit("leave_conversation", selectedChat._id)
     };

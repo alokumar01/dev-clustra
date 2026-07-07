@@ -5,7 +5,7 @@ const resendClient = new Resend(RESEND_API_KEY);
 
 export async function sendEmail({ to, subject, html }) {
     return resendClient.emails.send({
-        from: 'Dev Clustra <support@mail.whoisalok.tech>',
+        from: 'Dev Clustra <support@mail.aalokkumar.dev>',
         replyTo: 'mailtestingalok@gmail.com',
         to,
         subject,

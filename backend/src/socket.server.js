@@ -1,11 +1,9 @@
-//server engine (as io) 
+//server engine (as io)
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "./config/env.js";
 import ApiError from "./helpers/apiError.js";
 import cookie from "cookie"
-
-// ws://localhost:5000/socket.io/?EIO=4&transport=websocket
 
 // userId = set(socketId);
 const onlineUser = new Map(); // userId => Set(socketIds)
@@ -14,10 +12,10 @@ const onlineUser = new Map(); // userId => Set(socketIds)
 let io;
 //STEP 1. SOCKET KO INITILIZE KIYA
 export const initSocket = (server) => {
-    console.log("Socket server initialized");
+    console.log("Socket Server Initialized...");
     io = new Server(server, {
         cors: {
-            origin: "http://localhost:3000",
+            origin: process.env.FRONTEND_URL,
             credentials: true
         },
     });
@@ -26,7 +24,7 @@ export const initSocket = (server) => {
     io.use((socket, next) => {
         try {
             const cookies = socket.handshake.headers.cookie
-             // we can use cookie later 
+             // we can use cookie later
             if (!cookies) {
                 throw ApiError(401, "Cookies not found", "COOKIES_REQUIRED")
             }
@@ -45,7 +43,7 @@ export const initSocket = (server) => {
             }
 
             next();
-            
+
         } catch (error) {
             next(error)
         }
@@ -55,15 +53,19 @@ export const initSocket = (server) => {
     io.on("connection", (socket) => {
         const userId = socket.user.id;
 
-        console.log("User connected:", userId);
+        console.log("User connected:", userId, typeof userId);
 
         //  Add socket
         if (!onlineUser.has(userId)) {
             onlineUser.set(userId, new Set());
+
             io.emit("user_online", { userId }); // first time online
         }
 
         onlineUser.get(userId).add(socket.id);
+
+        // send the current user list to newly connectted client
+        socket.emit("online_users", [...onlineUser.keys()]);
 
         console.log("Current sockets for user:", onlineUser.get(userId));
 

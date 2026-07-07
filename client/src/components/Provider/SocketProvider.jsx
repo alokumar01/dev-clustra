@@ -9,9 +9,22 @@ import { useEffect } from "react";
 export default function SocketProvider({ children }) {
     const user = useAuthStore((state) => state.user);
 
+    // Online user event
+    useEffect(() => {
+        const handleOnlineUsers = (users) => {
+            useChatStore.getState().setOnlineUsers(users);
+        }
+
+        // listen for online users event
+        socket.on("online_users", handleOnlineUsers);
+
+        return () => {
+            socket.off("online_users", handleOnlineUsers);
+        }
+    }, []);
+
     useEffect(() => {
         if (!user?._id) return;
-
         const chatStore = useChatStore.getState();
 
         const handleUserOnline = ({ userId }) => {
@@ -30,6 +43,7 @@ export default function SocketProvider({ children }) {
             socket.off("user_offline", handleUserOffline);
         };
     }, [user?._id]);
+
 
     useEffect(() => {
         if (!user?._id) {
