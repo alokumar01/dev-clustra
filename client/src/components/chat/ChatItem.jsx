@@ -16,7 +16,7 @@ export default function ChatItem({ item, isActive, onClick }) {
       <Avatar>
         <AvatarImage src={item.chatWith?.avatar} />
         <AvatarFallback>{item.chatWith?.username?.[0] || 'U'}</AvatarFallback>
-        <AvatarBadge className="bg-green-500" />
+        {/* <AvatarBadge className="bg-green-500" /> */}
       </Avatar>
       <div className="flex-1 min-w-0">
         <h4 className="font-medium truncate">{item.chatWith?.username || 'Unknown'}</h4>

@@ -31,3 +31,4 @@ export default function ChatInput({ content, setContent, onSend }) {
     </div>
   );
 }
+
