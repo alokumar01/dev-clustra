@@ -4,10 +4,11 @@ export const useChatStore = create((set, get) => ({
   conversations: [],
   selectedChat: null,
   messagesByConversation: {},
-  
+
   // NEW: online users
   onlineUsers: new Set(),
 
+  // console.log("messageByconversation from useChatStore:", messagesByConversation)
   setOnlineUsers: (users) =>
     set({
       onlineUsers: new Set(users)
@@ -31,12 +32,8 @@ export const useChatStore = create((set, get) => ({
     return get().onlineUsers.has(userId);
   },
 
-
   setConversations: (conversations) => set({ conversations }),
   setSelectedChat: (selectedChat) => set({ selectedChat }),
-
-
-
 
   setMessagesForConversation: (conversationId, messages) =>
     set((state) => ({
@@ -57,14 +54,34 @@ export const useChatStore = create((set, get) => ({
           [conversationId]: [...messages, message],
         },
       };
-    }),
+  }),
 
   markConversationRead: (conversationId) =>
     set((state) => ({
+      // console.log("marking conversation read for:", conversationId),
       conversations: state.conversations.map((c) =>
         c._id === conversationId ? { ...c, unreadCount: 0 } : c
       ),
+
     })),
+
+  updateMessageAsRead: (conversationId, readerId, readTime) =>
+    set((state) => {
+      const messages = state.messagesByConversation[conversationId] || [];
+      const updatedMessages = messages.map((msg) => {
+        if (msg.senderId !== readerId && !msg.readAt) {
+          return { ...msg, readAt: readTime };
+        }
+        return msg;
+      })
+
+      return {
+        messagesByConversation: {
+          ...state.messagesByConversation,
+          [conversationId]: updatedMessages,
+        },
+      };
+    }),
 
   updateConversationMeta: (conversationId, patch) =>
     set((state) => {
