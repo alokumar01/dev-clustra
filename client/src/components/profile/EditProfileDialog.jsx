@@ -37,7 +37,6 @@ export default function EditProfileDialog({ user }) {
   const [loading, setLoading] = useState(false);
 
   const getMe = useAuthStore((state) => state.getMe);
-
   const [preview, setPreview] = useState(user.avatar);
 
   const [formData, setFormData] = useState({
@@ -56,7 +55,6 @@ export default function EditProfileDialog({ user }) {
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
     const objectUrl = URL.createObjectURL(file);

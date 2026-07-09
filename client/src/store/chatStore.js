@@ -35,6 +35,7 @@ export const useChatStore = create((set, get) => ({
   setConversations: (conversations) => set({ conversations }),
   setSelectedChat: (selectedChat) => set({ selectedChat }),
 
+  // Messages management all message aaya ChatScreen se
   setMessagesForConversation: (conversationId, messages) =>
     set((state) => ({
       messagesByConversation: {
@@ -55,6 +56,24 @@ export const useChatStore = create((set, get) => ({
         },
       };
   }),
+
+  // older message ho prepend karo with correct
+  prependMessagesToConversation: (conversationId, olderMessages) => {
+    set((state) => {
+      const existingMessages = state.messagesByConversation[conversationId] || [];
+      const newMessages = olderMessages.filter(
+        (msg) => !existingMessages.some((existingMsg) => existingMsg._id === msg._id)
+      );
+      if (newMessages.length === 0) return {};
+      return {
+        messagesByConversation: {
+          ...state.messagesByConversation,
+          [conversationId]: [...newMessages, ...existingMessages],
+        },
+      };
+    })
+
+  },
 
   markConversationRead: (conversationId) =>
     set((state) => ({
