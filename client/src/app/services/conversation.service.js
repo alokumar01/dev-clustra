@@ -14,10 +14,19 @@ export async function FetchAllConversations() {
 }
 
 // FETCH SINGLE CONVERSATION WITH MESSAGES
-export async function FetchSingleChatConversation(conversationId) {
+export async function FetchSingleChatConversation(
+        conversationId,
+        { before, limit } = {}
+    ) {
     try {
 
-        const response = await api.get(`/conversations/${conversationId}/messages`);
+        const response = await api.get(`/conversations/${conversationId}/messages`, {
+            params: {
+                before,
+                limit
+            }
+        });
+        // console.group("Fetched single chat conversation:", response.data);
 
         return response.data;
 
