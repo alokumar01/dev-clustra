@@ -10,7 +10,7 @@ export function generateEmailToken() {
   return { emailToken, hash };
 }
 
-//verify emailtoken from client side 
+//verify emailtoken from client side
 export function hashToken(emailToken) {
   return crypto
     .createHash('sha256')
@@ -27,7 +27,7 @@ export function generateForgotPasswordToken() {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  
+
   return { resetToken, hash };
 }
 
@@ -36,5 +36,25 @@ export function hashResetToken(resetToken) {
   return crypto
     .createHash('sha256')
     .update(resetToken)
+    .digest('hex');
+}
+
+// Generate invite token
+export function generateInviteToken() {
+  const inviteToken = crypto.randomBytes(32).toString('hex');
+
+  const hash = crypto
+    .createHash('sha256')
+    .update(inviteToken)
+    .digest('hex')
+
+  return { inviteToken, hash }
+}
+
+//verify invite token
+export function hashInviteToken(inviteToken) {
+  return crypto
+    .createHash('sha256')
+    .update(inviteToken)
     .digest('hex');
 }

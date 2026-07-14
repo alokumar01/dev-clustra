@@ -4,7 +4,8 @@
 // token
 // inviterId
 // status
-// expiredAt;
+// expiredAt; ttl
+
 // createdAt
 // updatedAt
 
@@ -26,14 +27,14 @@ const inviteSchema = new mongoose.Schema({
         enum: ["pending", "accepted", "expired"],
         default: "pending"
     },
-    // 
+    //
     expiredAt: {
         type: Date,
-        expires: 0,
+        required: true,
+        expires: 0, // ttl index
     }
 
 }, {timestamps: true});
 
-inviteSchema.index({ token: 1 });
 
 export default mongoose.model("Invite", inviteSchema);
