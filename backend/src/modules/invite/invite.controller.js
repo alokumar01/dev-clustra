@@ -1,3 +1,4 @@
+import { getIO } from "../../socket.server.js";
 import ApiError from "../../helpers/apiError.js";
 import { generateInviteService, verifyInviteService, acceptInviteService } from "./invite.service.js";
 
@@ -5,14 +6,14 @@ import { generateInviteService, verifyInviteService, acceptInviteService } from 
 export const generateInviteController = async (req, res, next) => {
     try {
 
-        const { token } = await generateInviteService({
+        const { inviteToken } = await generateInviteService({
             userId: req.user._id,
         })
 
         res.status(200).json({
             success: true,
             message: "Invite token generated successfully!",
-            data: token
+            data: inviteToken
         })
 
     } catch (error) {
@@ -24,13 +25,17 @@ export const verifyInviteController = async (req, res, next) => {
     try {
 
         const { token } = req.params;
-        const userId = req.user._id;
+        // const userId = req.user._id;
+        if (!token) {
+            throw new ApiError(400, "Invite token missng", "INVITE_TOKEN_MISSING")
+        }
 
-        const result = await verifyInviteService({ token, userId });
+        const { user } = await verifyInviteService({ token });
 
         res.status(200).json({
             success: true,
-            message: "Token verification successfull!"
+            message: "Token verification successfull!",
+            data: user
         });
 
     } catch (error) {
@@ -38,13 +43,26 @@ export const verifyInviteController = async (req, res, next) => {
     }
 }
 
-export const acceptInviteController = async (req, res, next) => {
-    try {
+    export const acceptInviteController = async (req, res, next) => {
+        try {
 
+            const { token } = req.params;
+            const userId = req.user._id;
 
+            const { conversation, inviter }  = await acceptInviteService({ token, userId });
 
-    } catch (error) {
-        next(error);
+            // Socker event for inviter, inform to inviter that someone accepte your invitation
+            const io =  getIO();
+            io.to(`user:${inviter.toString()}`).emit("new_conversation", conversation);
+
+            res.status(200).json({
+                success: true,
+                message: "Invitation accepted successfully!",
+                conversationId: conversation._id
+            })
+
+        } catch (error) {
+            next(error);
+        }
     }
-}
 
