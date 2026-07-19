@@ -19,21 +19,20 @@ export const getAllConversationService = async(userId) => {
     .populate("lastMessage", "content messageType senderId")
     .sort({ lastMessageAt: -1 });
 
+    //         const userIdStr = userId.toString();
+    // console.log("====== DEBUG START ======");
+    // console.log("userId:", userId);
+    // console.log("userIdStr:", userIdStr);
+    // console.log("unread object:", conversation.unreadCount);
+    // console.log("keys:", Object.keys(conversation.unreadCount || {}));
+    // console.log("value with raw:", conversation.unreadCount?.[userId]);
+    // console.log("value with string:", conversation.unreadCount?.[userIdStr]);
+    // console.log("====== DEBUG END ======");
     //all data
     const inbox = conversations.map((conversation) => {
         const otherUser = conversation.participants.find(
             (user) => user._id.toString() !== userId.toString()
         );
-
-//         const userIdStr = userId.toString();
-// console.log("====== DEBUG START ======");
-// console.log("userId:", userId);
-// console.log("userIdStr:", userIdStr);
-// console.log("unread object:", conversation.unreadCount);
-// console.log("keys:", Object.keys(conversation.unreadCount || {}));
-// console.log("value with raw:", conversation.unreadCount?.[userId]);
-// console.log("value with string:", conversation.unreadCount?.[userIdStr]);
-// console.log("====== DEBUG END ======");
 
         return {
             _id: conversation._id,
@@ -46,8 +45,6 @@ export const getAllConversationService = async(userId) => {
             : null,
             lastMessageAt: conversation.lastMessageAt,
             unreadCount: conversation.unreadCount.get(userId) ?? 0
-
-
         };
     });
 

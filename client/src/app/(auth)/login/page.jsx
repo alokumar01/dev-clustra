@@ -57,8 +57,8 @@ export default function LoginPage() {
 
       const redirect = searchParams.get("redirect");
 
-      router.push(redirect || "/chat"); 
-      
+      router.push(redirect || "/chat");
+
     } catch (submitError) {
       // console.log(" full err: ", submitError)
 
@@ -166,7 +166,7 @@ export default function LoginPage() {
                 <Link href="/forgot-password">Forgot Password</Link>
               </div>
             </Field>
-            
+
           </FieldGroup>
         </FieldSet>
 

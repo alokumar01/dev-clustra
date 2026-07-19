@@ -32,7 +32,6 @@ export async function FetchSingleChatConversation(
 
     } catch (error) {
         throw error;
-
     }
 }
 

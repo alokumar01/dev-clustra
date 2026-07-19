@@ -8,14 +8,20 @@ import { FetchAllConversations } from '@/app/services/conversation.service';
 import { useChatStore } from '@/store/chatStore';
 import ProfileView from '@/components/profile/ProfileView'
 import { useAuthStore } from '@/store/authStore'
+import InviteView from '@/components/invite/Invite'
+import { useSearchParams, useRouter} from 'next/navigation'
 
-export default function MainView() {
-    const conversations = useChatStore((state) => state.conversations);
+
+export default function ChatMain() {
+
+    const conversations = useChatStore((state) => state.conversations); // all conversation object
     const selectedChat = useChatStore((state) => state.selectedChat);
     const setConversations = useChatStore((state) => state.setConversations);
     const setSelectedChat = useChatStore((state) => state.setSelectedChat);
     const [activeIcon, setActiveIcon] = useState('messages');
     const user = useAuthStore(state => state.user);
+
+    console.log("all conversation from chat main: ", conversations);
 
     useEffect(() => {
         const fetchChats = async () => {
@@ -30,11 +36,28 @@ export default function MainView() {
         fetchChats();
     }, [setConversations])
 
+    // Testing invite converid with usesearchprams
+    const searchParams = useSearchParams();
+    const router = useRouter()
+    const conversationIdFromUrl = searchParams.get('conversationId');
+
+    useEffect(() => {
+        if(conversations){
+            const foundConversation = conversations.find(u => u._id === conversationIdFromUrl)
+            console.log("conversation found from invite: ", foundConversation)
+            if (foundConversation) {
+                setSelectedChat(foundConversation)
+                router.push("/chat");
+            }
+        }
+    }, [conversations, conversationIdFromUrl, router])
+
     return (
+
         <div className="flex h-screen min-h-screen bg-gray-50">
-            <Sidebar 
-                activeIcon={activeIcon} 
-                onIconClick={setActiveIcon} 
+            <Sidebar
+                activeIcon={activeIcon}
+                onIconClick={setActiveIcon}
             />
             {activeIcon === 'messages' && (
                 <div className="flex flex-1 md:flex">
@@ -45,13 +68,14 @@ export default function MainView() {
                         />
                     <div className="flex-1 hidden md:block">
                         {selectedChat ? (
-                            <ChatScreen 
-                            selectedChat={selectedChat}
+                            <ChatScreen
+                                selectedChat={selectedChat}
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full text-gray-400"> 
+                            <div className="flex items-center justify-center h-full text-gray-400">
                                 Good Morning, Alok
                                 Select your favourities and start chat...
+                                {conversationIdFromUrl}
                             </div>
                         )}
                     </div>
@@ -60,7 +84,7 @@ export default function MainView() {
 
             {/* when profile selected */}
             {activeIcon === 'profile' && (
-                <div className='flex-1'> 
+                <div className='flex-1'>
                     <ProfileView user={user}/>
                 </div>
             )}
@@ -82,6 +106,12 @@ export default function MainView() {
                 <div> Settings coming soon </div>
             )}
 
+            {/* invite  */}
+            {activeIcon === 'invite' && (
+                <div className='flex-1'>
+                    <InviteView />
+                </div>
+            )}
         </div>
     )
 }
