@@ -5,7 +5,7 @@ import { socket } from "@/store/socketStore";
 import { useChatStore } from "@/store/chatStore";
 import { useEffect } from "react";
 import { MarkAsRead } from "@/app/services/conversation.service";
-
+import { toast } from "sonner";
 
 export default function SocketProvider({ children }) {
     const user = useAuthStore((state) => state.user);
@@ -119,6 +119,25 @@ export default function SocketProvider({ children }) {
             socket.off("message_read", handleMessageRead);
         }
 
+    }, [user?._id]);
+
+    // new conversation created, inform to inviter
+    useEffect(() => {
+        if (!user?._id) return;
+
+        const InviteConversation = (data) => {
+            const chatStore = useChatStore.getState();
+            chatStore.appendInviteConversation(data)
+            // console.log("data from socker provider append conve: ", data);
+
+           toast.success(`${data.chatWith.username} accepted your invite. Say hi! 👋`);
+        }
+
+        socket.on("conversation_created", InviteConversation);
+
+        return () => {
+            socket.off("conversation_created", InviteConversation);
+        }
     }, [user?._id]);
 
     return children;

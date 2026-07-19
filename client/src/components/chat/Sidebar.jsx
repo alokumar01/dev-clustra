@@ -2,7 +2,7 @@
 
 
 import { LogOutIcon } from 'lucide-react';
-import { MessageSquare, Users, Settings2, CircleUserRoundIcon, PhoneCallIcon } from 'lucide-react';
+import { MessageSquare, Users, Settings2, CircleUserRoundIcon, PhoneCallIcon, UserRoundPlusIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuthStore } from '../../store/authStore';
 import { useRouter } from 'next/navigation';
@@ -18,9 +18,7 @@ export default function Sidebar({ activeIcon, onIconClick }) {
     { id: 'profile', icon: CircleUserRoundIcon, label: 'Profile'},
     { id: 'calls', icon: PhoneCallIcon, label: 'Calls'},
     { id: 'settings', icon: Settings2, label: 'Settings'},
-    // { id: 'logout', icon: LogOutIcon, label: 'Logout'}
-
-
+    { id: 'invite', icon: UserRoundPlusIcon , label: 'Invite'}
   ];
 
   return (
@@ -47,6 +45,7 @@ export default function Sidebar({ activeIcon, onIconClick }) {
         </Button>
       ))}
 
+      {/* Logout button bottom */}
       <div className="mt-auto">
         {/* // Logout button */}
         <Button

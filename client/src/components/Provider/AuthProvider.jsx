@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function AuthProvider({ children }) {
-    const router = useRouter();
-    const pathname = usePathname();
+    // const router = useRouter();
+    // const pathname = usePathname();
 
     const {
         getMe,
@@ -26,26 +26,40 @@ export default function AuthProvider({ children }) {
         init();
     }, []);
 
-    useEffect(() => {
-        if (!ready || isLoading) return;
+    // useEffect(() => {
+    //     if (!ready || isLoading) return;
 
-        const protectedRoutes = [
-            "/chat",
-            "/dashboard",
-            "/profile",
-            "/settings",
-        ];
+    //     const protectedRoutes = [
+    //         "/chat",
+    //         "/dashboard",
+    //         "/profile",
+    //         "/settings",
+    //     ];
 
-        const isProtected = protectedRoutes.some(route =>
-            pathname.startsWith(route)
-        );
+    //     const publicRoutes = [
+    //         "/login",
+    //         "/signup",
+    //         "/forgot-password",
+    //     ]
 
-        if (!isAuthenticated && isProtected) {
-            router.replace(
-                `/login?redirect=${encodeURIComponent(pathname)}`
-            );
-        }
-    }, [ready, isLoading, isAuthenticated, pathname, router]);
+    //     const isProtected = protectedRoutes.some(route =>
+    //         pathname.startsWith(route)
+    //     );
+
+    //     const isPublicRoute = publicRoutes.some(route =>
+    //         pathname.startsWith(route)
+    //     );
+
+    //     if (isAuthenticated && isPublicRoute) {
+    //         router.replace("/chat");
+    //     }
+
+    //     if (!isAuthenticated && isProtected) {
+    //         router.replace(
+    //             `/login?redirect=${encodeURIComponent(pathname)}`
+    //         );
+    //     }
+    // }, [ready, isLoading, isAuthenticated, pathname, router]);
 
     if (!ready || isLoading) {
         return null;

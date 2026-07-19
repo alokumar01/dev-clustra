@@ -12,6 +12,7 @@ import { socket } from "@/store/socketStore"
 
 
 export default function ChatScreen({ selectedChat }) {
+  console.log("chat screen selected chat testing: ", selectedChat);
   const user = useAuthStore((state) => state.user);
   // console.log("user from chat screen:", user)
   const emptyMessages = useRef([]);
@@ -72,9 +73,9 @@ export default function ChatScreen({ selectedChat }) {
 
     const fetchMessages = async () => {
       try {
-        const res = await FetchSingleChatConversation(selectedChat._id);
+        const res = await FetchSingleChatConversation(conversationId);
         // latest cursor information
-        console.log("chat screen message:", res)
+        // console.log("chat screen message:", res)
         nextCursorRef.current = res.data.nextCursor;
         setHasMore(res.data.hasMore);
 

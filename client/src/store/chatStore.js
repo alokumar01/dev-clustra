@@ -75,6 +75,23 @@ export const useChatStore = create((set, get) => ({
 
   },
 
+  // Append invite conversation to top
+  appendInviteConversation: (data) => {
+    set((state) => {
+      const existingConversations = state.conversations;
+
+      const hasInviteConversation = existingConversations.find(u => u._id === data._id);
+      if (hasInviteConversation) {
+        return state;
+      }
+
+      return {
+        conversations: [data, ...existingConversations],
+      };
+
+    });
+  },
+
   markConversationRead: (conversationId) =>
     set((state) => ({
       // console.log("marking conversation read for:", conversationId),
@@ -145,3 +162,9 @@ export const useChatStore = create((set, get) => ({
       return { conversations: updatedConversations };
     }),
 }));
+
+
+/*
+Realtime update of conversation should be visible whenever the user responds.
+Write in zustand.
+*/
