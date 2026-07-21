@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-// import { useRouter } from 'next/router';
-
 
 export default function InvitePage({ params }) {
     const { token } = use(params);
@@ -17,7 +15,7 @@ export default function InvitePage({ params }) {
     const router = useRouter(); // where do i want to go
     const [inviter, setInviter] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [errorState, setErrorState] = useState(null); // Tracks "USED" or "EXPIRED"
+    const [errorState, setErrorState] = useState(null); // Track "USED" or "EXPIRED"
 
     const {
         getMe,
@@ -32,12 +30,11 @@ export default function InvitePage({ params }) {
                 setLoading(true);
                 const res = await verifyInviteToken(token);
 
-                // Map accurately to your backend structure (e.g., res.data.user)
                 setInviter(res.data);
                 setErrorState(null);
             } catch (error) {
-                // console.error("error from invite token: ", error);
                 // Read the custom error payload sent by your backend ApiError handler
+
                 const statusCode = error.response?.data?.status;
                 const errorCode = error.response?.data?.code; // e.g., "INVITE_TOKEN_USED"
 
@@ -63,7 +60,7 @@ export default function InvitePage({ params }) {
         // if (isAuthenticated && token)
         const checkSession = sessionStorage.getItem("token");
         if (token === checkSession && isAuthenticated) {
-            toast.success("Joining chat...")
+            toast.success("Welcome back! Completing your invitation...")
             handleAccepetInvite();
             sessionStorage.clear();
             return;
@@ -81,7 +78,6 @@ export default function InvitePage({ params }) {
         setLoading(true);
         try {
             const res = await acceptInvite(token)
-            // console.log("data from handle Accept: ", res);
 
             const conversationId = res.conversationId;
             if (conversationId) {
@@ -90,14 +86,14 @@ export default function InvitePage({ params }) {
                 console.log("No Conversation ID is returned from server");
             }
         } catch (error) {
-            toast.error("error from handle accepet client", error.response?.data?.message);
+            toast.error(error?.response?.data?.message);
         } finally {
             setLoading(false);
         }
     }
 
     // 1. Loading UI State
-    if (loading) return <p className="text-center p-10">Checking invitation link...<Spinner /> </p>
+    if (loading) return <p className="text-center p-10"> <Spinner /> </p>
 
     // 2. Already Used Link UI State
     if (errorState === "USED") {

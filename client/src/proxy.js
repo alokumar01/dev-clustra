@@ -11,7 +11,6 @@ export function proxy(request) {
     // 2. current path
     const path = request.nextUrl.pathname;
 
-
     // 3. route groups
     const publicRoutes = ["/login", "/signup", "/forgot-password"];
     const protectedRoutes = ["/dashboard", "/profile", "/chat", "/settings"];
@@ -38,7 +37,14 @@ export function proxy(request) {
 
     // if user is not logged in and accessing procted routes redirect to login
     if (!isLoggedIn && isProtectedRoute) {
-        return NextResponse.redirect(new URL("/login", request.url));
+
+        const loginUrl = new URL("/login", request.url);
+
+        // preserve redirect path better ux
+        loginUrl.searchParams.set("redirect", path);
+        // return NextResponse.redirect(new URL("/login", request.url));
+
+        return NextResponse.redirect(loginUrl);
     }
 
     // any trace of session with token
