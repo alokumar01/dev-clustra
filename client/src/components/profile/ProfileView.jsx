@@ -12,7 +12,7 @@ export default function ProfileView({ user }) {
         <div className="flex items-center justify-between">
           <div className="flex gap-5 items-center">
             <Image
-              src={user.avatar}
+              src={user?.avatar}
               alt="profile"
               width={100}
               height={100}
