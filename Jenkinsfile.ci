@@ -107,6 +107,9 @@ pipeline {
         }
 
         stage('Trigger CD') {
+            when {
+                branch 'main'
+            }
             steps {
                 build job: 'DevClustra CD',
                     wait: false,

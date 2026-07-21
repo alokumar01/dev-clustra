@@ -1,27 +1,37 @@
 // src/components/chat/Sidebar.jsx
 
 
-import { MessageSquare, Users, Settings2, CircleUserRoundIcon, PhoneCallIcon } from 'lucide-react';
+import { LogOutIcon } from 'lucide-react';
+import { MessageSquare, Users, Settings2, CircleUserRoundIcon, PhoneCallIcon, UserRoundPlusIcon } from 'lucide-react';
+import { Button } from '../ui/button';
+import { useAuthStore } from '../../store/authStore';
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar({ activeIcon, onIconClick }) {
+  const logout = useAuthStore((state) => state.logout);
+  const router = useRouter();
+
+
   const icons = [
     { id: 'messages', icon: MessageSquare, label: 'Messages' },
     { id: 'groups', icon: Users, label: 'Groups' },
     { id: 'profile', icon: CircleUserRoundIcon, label: 'Profile'},
     { id: 'calls', icon: PhoneCallIcon, label: 'Calls'},
-    { id: 'settings', icon: Settings2, label: 'Settings'}
-
+    { id: 'settings', icon: Settings2, label: 'Settings'},
+    { id: 'invite', icon: UserRoundPlusIcon , label: 'Invite'}
   ];
 
   return (
     <div className="w-15 bg-white shadow-sm flex flex-col items-center py-4 gap-4 md:flex">
       {/* Logo */}
       <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold">
-        Dev C
+        Dev Chat
       </div>
+
       {/* Icons */}
       {icons.map(({ id, icon: Icon, label }) => (
-        <button
+        <Button
+          variant="ghost"
           key={id}
           onClick={() => onIconClick(id)}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
@@ -32,8 +42,27 @@ export default function Sidebar({ activeIcon, onIconClick }) {
           title={label}
         >
           <Icon size={20} />
-        </button>
+        </Button>
       ))}
+
+      {/* Logout button bottom */}
+      <div className="mt-auto">
+        {/* // Logout button */}
+        <Button
+          variant="ghost"
+          onClick={async () => {
+            await logout();
+            router.replace('/login');
+          }}
+          className={`w-10 h-10  rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+            'text-gray-500 hover:bg-red-500'
+          }`}
+
+          title="Logout"
+        >
+          <LogOutIcon size={20} />
+        </Button>
+      </div>
     </div>
   );
 }

@@ -6,9 +6,9 @@ import { cookieOptions } from "../../config/cors.js"
 export const signupController = async (req, res, next) => { // Controller ka kaam hai HTTP data extract karna
     try {
         const {username, email, password}  = req.body;
-        
+
         const user = await signupService({ username, email, password });
-        
+
         res.status(201).json({
             success: true,
             message: "Signup successful. Please check your email to verify your account.",
@@ -22,7 +22,7 @@ export const signupController = async (req, res, next) => { // Controller ka kaa
 export const verifyEmailController = async (req, res, next) => {
     try {
         const { token } = req.query;
-        
+
         if (!token) {
             return res.status(400).json({
                 success: false,
@@ -80,15 +80,15 @@ export const loginController = async (req, res, next) => {
             ...cookieOptions,
             maxAge: 15 * 60 * 1000,
         } )
-        
+
         // jwt refresh token into cookies, longer time token only used when accessToken expires
-        res.cookie("refreshToken", refreshToken, { 
+        res.cookie("refreshToken", refreshToken, {
             ...cookieOptions,
             maxAge: 7 * 24 * 60 * 60 * 1000,
-        })                
-        
+        })
+
         let message = "Login Successful!, Happy to see you!";
-        
+
         if (wasSuspended) {
             message = "Welcome back! Your suspension period has ended. Please follow our Code of Conduct.";
         }
@@ -97,7 +97,7 @@ export const loginController = async (req, res, next) => {
             success: true,
             message: message,
         });
-        
+
     } catch (error) {
         next(error)
     }
@@ -106,7 +106,7 @@ export const loginController = async (req, res, next) => {
 //logout
 export const logoutController = async (req, res, next) => {
     try {
-        //get the token 
+        //get the token
         const refreshToken = req.cookies.refreshToken;
 
         if (!refreshToken) {
@@ -128,18 +128,18 @@ export const logoutController = async (req, res, next) => {
     }
 }
 
-// refresh token 
+// refresh token
 export const refreshAccessTokenController = async (req, res, next) => {
     try {
         const oldRfToken = req.cookies.refreshToken;
-        
+
         if(!oldRfToken) {
             throw new ApiError(401, "Refresh token missing", "REFRESH_TOKEN_MISSING");
         }
 
         //calling the services
         const {accessToken, refreshToken } = await refreshAccessTokenService({ oldRfToken });
-        
+
         const cookieOption = {
             httpOnly: true,
             secure: NODE_ENV === "production",
@@ -150,7 +150,7 @@ export const refreshAccessTokenController = async (req, res, next) => {
         //setting tokens to browser
         res.cookie("accessToken", accessToken, { ...cookieOption, maxAge:  15 * 60 * 1000 });
         res.cookie("refreshToken", refreshToken, {...cookieOption, maxAge: 7 * 24 * 60 * 60 * 1000 });
-        
+
         res.status(200).json({
             success: true,
             message: "Token refreshed successfuly!"
@@ -164,13 +164,13 @@ export const refreshAccessTokenController = async (req, res, next) => {
 export const updateProfileController = async (req, res, next) => {
     try {
         const { username, bio } = req.body;
-        
+
         const updatedUser = await updateProfileService({
             userId: req.user._id,
             newUsername: username,
             newBio: bio
         });
-        
+
         res.status(200).json({
             success: true,
             message: "Profile updated succesfully",
@@ -178,7 +178,7 @@ export const updateProfileController = async (req, res, next) => {
         });
 
     } catch (error) {
-        next(error);   
+        next(error);
     }
 }
 
@@ -203,7 +203,7 @@ export const changePasswordController = async(req, res, next) => {
     }
 }
 
-//forget password, when not logged in or user forgot the password, in two steps 
+//forget password, when not logged in or user forgot the password, in two steps
 export const forgotPasswordController = async (req, res, next) => {
     try {
         const { email } = req.body;
@@ -228,7 +228,7 @@ export const forgotPasswordController = async (req, res, next) => {
 export const resetPasswordController = async (req, res, next) => {
     try {
         // const { token } = req.query;
-        // const { newPassword } = req.body; // we have to chagne this 
+        // const { newPassword } = req.body; // we have to chagne this
         const { token, newPassword } = req.body;
 
         if (!token) {

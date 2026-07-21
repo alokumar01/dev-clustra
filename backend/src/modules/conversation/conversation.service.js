@@ -18,22 +18,21 @@ export const getAllConversationService = async(userId) => {
     .populate("participants", "username avatar")
     .populate("lastMessage", "content messageType senderId")
     .sort({ lastMessageAt: -1 });
-    
+
+    //         const userIdStr = userId.toString();
+    // console.log("====== DEBUG START ======");
+    // console.log("userId:", userId);
+    // console.log("userIdStr:", userIdStr);
+    // console.log("unread object:", conversation.unreadCount);
+    // console.log("keys:", Object.keys(conversation.unreadCount || {}));
+    // console.log("value with raw:", conversation.unreadCount?.[userId]);
+    // console.log("value with string:", conversation.unreadCount?.[userIdStr]);
+    // console.log("====== DEBUG END ======");
     //all data
     const inbox = conversations.map((conversation) => {
         const otherUser = conversation.participants.find(
             (user) => user._id.toString() !== userId.toString()
         );
-
-//         const userIdStr = userId.toString();
-// console.log("====== DEBUG START ======");
-// console.log("userId:", userId);
-// console.log("userIdStr:", userIdStr);
-// console.log("unread object:", conversation.unreadCount);
-// console.log("keys:", Object.keys(conversation.unreadCount || {}));
-// console.log("value with raw:", conversation.unreadCount?.[userId]);
-// console.log("value with string:", conversation.unreadCount?.[userIdStr]);
-// console.log("====== DEBUG END ======");
 
         return {
             _id: conversation._id,
@@ -42,12 +41,10 @@ export const getAllConversationService = async(userId) => {
                 content: conversation.lastMessage.content,
                 messageType: conversation.lastMessage.messageType,
                 senderId: conversation.lastMessage.senderId
-            } 
-            : null, 
+            }
+            : null,
             lastMessageAt: conversation.lastMessageAt,
             unreadCount: conversation.unreadCount.get(userId) ?? 0
-
-            
         };
     });
 
@@ -64,42 +61,42 @@ export const getConversationMessagesService = async(conversationId, userId, befo
     if (!conversation) {
         throw new ApiError(404, "Conversation is not found", "CONVERSATION_NOT_FOUND");
     }
-    
+
     //check for security if not that user return 403
-    //authorization check 
+    //authorization check
     const isParticipants = conversation.participants.some(p => p.toString() === userId.toString());
     if (!isParticipants) {
         throw new ApiError(403, "You are not part of this conversation", "ACCESS_DENIED_CHAT")
     }
-    
+
     const query = { conversationId }
     if (before) {
         query.createdAt = { $lt: new Date(before) };
-    }  
+    }
 
-    // work with limit 
+    // work with limit
     const MAX_LIMIT = 30;
     let parsedLimit = parseInt(limit, 10);
     if (isNaN(parsedLimit) || parsedLimit <= 0 ) {
         parsedLimit = 20;
     }
 
-    const requestedLimit = Math.min(parsedLimit, MAX_LIMIT);
-    
+    const requestedLimit = Math.min(parsedLimit, MAX_LIMIT); // yaha bhi 20 hai
+
     const messages = await Message.find(query)
-        .sort({ createdAt: -1 })
-        .limit( requestedLimit )
+        .sort({ createdAt: -1 }) // descending to get the latest messages first
+        .limit( requestedLimit + 1 ) // +1 karo requestedLimit ko for checking if there are more messages
         .lean()
-    
-    const hasMore = messages.length > requestedLimit;
+
+    const hasMore = messages.length > requestedLimit; // then yes, there are more messages to fetch
 
     if (hasMore) {
         messages.pop();
     }
 
-    const nextCursor = hasMore ? messages[messages.length-1].createdAt : null;    
+    const nextCursor = hasMore ? messages[messages.length-1].createdAt : null;
 
-    return { 
+    return {
         messages,
         nextCursor,
         hasMore
@@ -112,7 +109,7 @@ export const readConversationMessagesService = async(conversationId, userId) => 
         throw new ApiError(404, "Conversation is not found", "CONVERSATION_NOT_FOUND");
     }
 
-    const conversation = await Conversation.findById(conversationId); // ye ek document lakar dega mujhe 
+    const conversation = await Conversation.findById(conversationId); // ye ek document lakar dega mujhe
     if (!conversation) {
         throw new ApiError(404, "Conversation is not found", "CONVERSATION_NOT_FOUND");
     }
@@ -121,7 +118,7 @@ export const readConversationMessagesService = async(conversationId, userId) => 
     if (!isParticipants) {
         throw new ApiError(403, "You are not part of this conversation", "CHAT_ACCESS_DENIED")
     }
-    
+
     // I AM USING MONGODB TRANSACTIONS FOR MAINTAINING CONSISTENCY BETWEEN MESSAGE AND CONVERSATION
 
     //STEP1: START SESSION
@@ -148,37 +145,37 @@ export const readConversationMessagesService = async(conversationId, userId) => 
                 },
                 { session }
             );
-            
+
             finalResult = {
                 modifiedCount: result.modifiedCount,
                 readTime
             };
-        
-            // now the question is, in message readAt update karne ke baad, 
+
+            // now the question is, in message readAt update karne ke baad,
             // if server crash then conversation me unread count kaise update hoga
             //SOLUTION --> MONGODB TRANSACTIONS
-            
+
             // throw new Error("Simulated crash");
-            
+
             //update conversation unread count
             await Conversation.updateOne(
                 { _id: conversationId },
                 {
-                    $set: { 
-                        [`unreadCount.${userId.toString()}`]: 0 
+                    $set: {
+                        [`unreadCount.${userId.toString()}`]: 0
                     }
                 },
                 { session }
             )
-        
+
             // //STEP4: COMMIT
             // await session.commitTransaction();
             // return {modifiedCount: result.modifiedCount, readTime}
         });
-        
+
         // console.log("from service", finalResult)
         return finalResult;
-        
+
     } catch (error) {
         // await session.abortTransaction();
         console.error("message read failed ", error);

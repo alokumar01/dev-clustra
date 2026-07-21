@@ -37,7 +37,6 @@ export default function EditProfileDialog({ user }) {
   const [loading, setLoading] = useState(false);
 
   const getMe = useAuthStore((state) => state.getMe);
-
   const [preview, setPreview] = useState(user.avatar);
 
   const [formData, setFormData] = useState({
@@ -56,7 +55,6 @@ export default function EditProfileDialog({ user }) {
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
     const objectUrl = URL.createObjectURL(file);
@@ -105,7 +103,7 @@ export default function EditProfileDialog({ user }) {
       }
 
       // Refresh zustand user
-      // await getMe();
+      await getMe();
 
       toast.success(
         "Profile updated successfully"
@@ -130,7 +128,7 @@ export default function EditProfileDialog({ user }) {
       onOpenChange={setOpen}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="primary">
           Edit Profile
         </Button>
       </DialogTrigger>
@@ -141,7 +139,7 @@ export default function EditProfileDialog({ user }) {
       >
         <DialogHeader>
           <DialogTitle>
-            Edit Profile
+            Edit Profile Dupliate
           </DialogTitle>
         </DialogHeader>
 

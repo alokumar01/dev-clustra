@@ -3,7 +3,7 @@ import { api } from "@/lib/api/axios";
 // FETCH ALL CONVERSATIONS
 export async function FetchAllConversations() {
     try {
-        
+
         const response = await api.get("/conversations");
 
         return response.data;
@@ -14,23 +14,31 @@ export async function FetchAllConversations() {
 }
 
 // FETCH SINGLE CONVERSATION WITH MESSAGES
-export async function FetchSingleChatConversation(conversationId) {
+export async function FetchSingleChatConversation(
+        conversationId,
+        { before, limit } = {}
+    ) {
     try {
-        
-        const response = await api.get(`/conversations/${conversationId}/messages`);
+
+        const response = await api.get(`/conversations/${conversationId}/messages`, {
+            params: {
+                before,
+                limit
+            }
+        });
+        // console.group("Fetched single chat conversation:", response.data);
 
         return response.data;
 
     } catch (error) {
         throw error;
-
     }
 }
 
 // MARK AS READ AND RESET UNREAD COUNT
 export async function MarkAsRead(conversationId) {
     try {
-        
+
         const response = await api.post(`/conversations/${conversationId}/read`);
 
         return response.data;

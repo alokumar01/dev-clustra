@@ -3,6 +3,9 @@ import "../styles/globals.css"
 import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/components/Provider/AuthProvider";
 import SocketProvider from "@/components/Provider/SocketProvider";
+import ThemeProvider from "@/components/Provider/ThemeProvider";
+import Header from "@/components/pages/Header";
+import Footer from "@/components/pages/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,16 +26,22 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* {children} */}
         <Toaster />
-        <AuthProvider>
-          <SocketProvider>
-            {children}
-          </SocketProvider>
-        </AuthProvider>
+        <ThemeProvider >
+          <AuthProvider>
+            <SocketProvider>
+              {/* <Header /> */}
+                {children}
+              {/* <Footer /> */}
+
+            </SocketProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

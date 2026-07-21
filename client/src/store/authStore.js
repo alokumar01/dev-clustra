@@ -28,7 +28,7 @@ export const useAuthStore = create((set) => ({
         } catch (err) {
             const status = err.response?.status;
 
-            if (status !== 401) {
+            if (status === 401) {
                 set({
                     user: null,
                     isAuthenticated: false,
@@ -43,27 +43,29 @@ export const useAuthStore = create((set) => ({
     },
 
     logout: async () => {
-        try {   
-            set({ isLoading: true });
+        try {
+            set({ isLoading: true});
 
             const response = await api.get("/auth/logout");
-            console.log(response)
+            // console.log("Logout response without data:", response);
+            // console.log("Logout response with data with message:", response.data);
 
-            toast.success(response.data?.message || "Logout from client");
-            
+
+            toast.success(response.data?.message);
+            // redirect("/login");
+
+
         } catch (err) {
-
             toast.error(
-                err.response?.data?.message || "Logout failed"
-            );
-            
+                err.response?.message || "Logout failed"
+            )
         } finally {
             set({
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
-            });
+            })
         }
     }
-    
+
 }));
