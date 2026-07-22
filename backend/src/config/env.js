@@ -32,3 +32,4 @@ export const NODE_ENV = process.env.NODE_ENV
 export const JWT_REFRESH_TOKEN_EXPIRES = process.env.JWT_REFRESH_TOKEN_EXPIRES
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET
 export const CLOUDINARY_CONFIG =  extractCloudinaryConfig()
+export const FRONTEND_LIVE_URL = process.env.FRONTEND_LIVE_URL

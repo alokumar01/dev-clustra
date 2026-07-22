@@ -21,7 +21,7 @@ export default function ChatMain() {
     const [activeIcon, setActiveIcon] = useState('messages');
     const user = useAuthStore(state => state.user);
 
-    console.log("all conversation from chat main: ", conversations);
+    // console.log("all conversation from chat main: ", conversations);
 
     useEffect(() => {
         const fetchChats = async () => {
@@ -44,7 +44,7 @@ export default function ChatMain() {
     useEffect(() => {
         if(conversations){
             const foundConversation = conversations.find(u => u._id === conversationIdFromUrl)
-            console.log("conversation found from invite: ", foundConversation)
+            // console.log("conversation found from invite: ", foundConversation)
             if (foundConversation) {
                 setSelectedChat(foundConversation)
                 router.push("/chat");
