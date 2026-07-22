@@ -1,33 +1,58 @@
 import { getIO } from "../../socket.server.js";
 import ApiError from "../../helpers/apiError.js";
 import { generateInviteService, verifyInviteService, acceptInviteService } from "./invite.service.js";
-import { FRONTEND_URL } from "../../config/env.js";
+import { FRONTEND_LIVE_URL, FRONTEND_URL, NODE_ENV } from "../../config/env.js";
 
 // Generate invite link token,
 export const generateInviteController = async (req, res, next) => {
+    console.log("========== GENERATE INVITE ==========");
+    console.log("1. Controller entered");
+
     try {
+        console.log("2. User ID:", req.user?._id);
+
+        console.log("3. Calling service...");
 
         const { inviteToken } = await generateInviteService({
             userId: req.user._id,
-        })
+        });
 
-        //generate full url
-        const fullUrl = `${FRONTEND_URL}/invite/${inviteToken}`
+        console.log("4. Service completed");
+        console.log("5. Invite Token:", inviteToken);
+
+        let url;
+
+        if (NODE_ENV === "production") {
+            url = FRONTEND_LIVE_URL;
+        } else {
+            url = FRONTEND_URL;
+        }
+
+        console.log("6. Frontend URL:", url);
+
+        const fullUrl = `${url}/invite/${inviteToken}`;
+
+        console.log("7. Full URL:", fullUrl);
+
+        console.log("8. Sending response");
 
         res.status(200).json({
             success: true,
             message: "Invite url token generated successfully!",
             data: {
                 inviteToken,
-                fullUrl
-            }
-        })
+                fullUrl,
+            },
+        });
 
+        console.log("9. Response sent");
     } catch (error) {
+        console.error("XXXXXXXX CONTROLLER ERROR XXXXXXXX");
+        console.error(error);
+        console.error(error.stack);
         next(error);
     }
-}
-
+};
 export const verifyInviteController = async (req, res, next) => {
     try {
 

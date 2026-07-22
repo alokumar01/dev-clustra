@@ -22,7 +22,7 @@ export const generateInviteService = async({ userId }) => {
         expiredAt: threeDaysExpire,
     })
 
-    await invite.save();
+    // await invite.save();
 
     return { inviteToken };
 }
