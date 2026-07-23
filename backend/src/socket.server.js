@@ -1,7 +1,7 @@
 //server engine (as io)
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "./config/env.js";
+import { FRONTEND_URL, JWT_SECRET } from "./config/env.js";
 import ApiError from "./helpers/apiError.js";
 import cookie from "cookie"
 
@@ -15,7 +15,7 @@ export const initSocket = (server) => {
     console.log("Socket Server Initialized...");
     io = new Server(server, {
         cors: {
-            origin: process.env.FRONTEND_URL,
+            origin: FRONTEND_URL,
             credentials: true
         },
     });
