@@ -47,13 +47,9 @@ export const useAuthStore = create((set) => ({
             set({ isLoading: true});
 
             const response = await api.get("/auth/logout");
-            // console.log("Logout response without data:", response);
-            // console.log("Logout response with data with message:", response.data);
-
 
             toast.success(response.data?.message);
             // redirect("/login");
-
 
         } catch (err) {
             toast.error(

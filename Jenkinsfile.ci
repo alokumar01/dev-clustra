@@ -64,18 +64,27 @@ pipeline {
         }
 
         stage('Build Backend Image') {
+            when {
+                branch 'main'
+            }
             steps {
                 sh "docker build -t ${BACKEND_IMAGE} ./backend"
             }
         }
 
         stage('Build Frontend Image') {
+            when {
+                branch 'main'
+            }
             steps {
                 sh "docker build -t ${FRONTEND_IMAGE} ./client"
             }
         }
 
         stage('Docker Login') {
+            when {
+                branch 'main'
+            }
             steps {
                 withCredentials([
                     usernamePassword(
@@ -84,7 +93,6 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-
                     sh '''
                         echo "$DOCKER_PASS" | docker login \
                         -u "$DOCKER_USER" \
@@ -95,12 +103,18 @@ pipeline {
         }
 
         stage('Push Backend Image') {
+            when {
+                branch 'main'
+            }
             steps {
                 sh "docker push ${BACKEND_IMAGE}"
             }
         }
 
         stage('Push Frontend Image') {
+            when {
+                branch 'main'
+            }
             steps {
                 sh "docker push ${FRONTEND_IMAGE}"
             }
@@ -126,20 +140,23 @@ pipeline {
     post {
 
         always {
-
-            sh '''
-                docker logout || true
-                docker image rm ${BACKEND_IMAGE} || true
-                docker image rm ${FRONTEND_IMAGE} || true
-            '''
+            script {
+                if (env.BRANCH_NAME == "main") {
+                    sh """
+                        docker logout || true
+                        docker image rm ${BACKEND_IMAGE} || true
+                        docker image rm ${FRONTEND_IMAGE} || true
+                    """
+                }
+            }
         }
 
         success {
-            echo "CI Pipeline completed successfully."
+            echo "✅ CI Pipeline completed successfully."
         }
 
         failure {
-            echo "CI Pipeline failed."
+            echo "❌ CI Pipeline failed."
         }
     }
 }

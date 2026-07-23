@@ -56,14 +56,14 @@ export function proxy(request) {
     return NextResponse.next();
 }
 
-// export const config = {
-//     matcher: [
-//         /*
-//           Run on all routes except:
-//           - /api (backend routes)
-//           - Next.js internals
-//           - static files
-//         */
-//         "/((?!api|_next/static|_next/image|favicon.ico).*)",
-//     ],
-// };
+export const config = {
+    matcher: [
+        /*
+          Run on all routes except:
+          - /api (backend routes)
+          - Next.js internals
+          - static files
+        */
+        "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    ],
+};

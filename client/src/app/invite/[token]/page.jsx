@@ -1,147 +1,248 @@
 "use client";
-import { Card } from '@/components/ui/card';
-import Image from 'next/image';
-import React, { use, useEffect, useState } from 'react'
-import { acceptInvite, verifyInviteToken } from '@/app/services/invite.service';
-import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/authStore';
+
+import { ArrowRight, CircleAlert, Loader2Icon, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+import { acceptInvite, verifyInviteToken } from '@/app/services/invite.service';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuthStore } from '@/store/authStore';
 
 export default function InvitePage({ params }) {
     const { token } = use(params);
-    const pathname = usePathname(); // where am I
-    const router = useRouter(); // where do i want to go
+    const pathname = usePathname();
+    const router = useRouter();
+
+    const { isAuthenticated } = useAuthStore();
     const [inviter, setInviter] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [errorState, setErrorState] = useState(null); // Track "USED" or "EXPIRED"
+    const [status, setStatus] = useState('verifying');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isAccepting, setIsAccepting] = useState(false);
 
-    const {
-        getMe,
-        isAuthenticated,
-        isLoading,
-    } = useAuthStore();
-
-    // verify the token and return the inviter details
-    useEffect(() => {
-        const handleInviteToken = async () => {
-            try {
-                setLoading(true);
-                const res = await verifyInviteToken(token);
-
-                setInviter(res.data);
-                setErrorState(null);
-            } catch (error) {
-                // Read the custom error payload sent by your backend ApiError handler
-
-                const statusCode = error.response?.data?.status;
-                const errorCode = error.response?.data?.code; // e.g., "INVITE_TOKEN_USED"
-
-                if (statusCode === 410 || errorCode === "INVITE_TOKEN_USED") {
-                    setErrorState("USED")
-                    toast.warning(error.response?.data?.message);
-                } else {
-                    // setErrorState("EXPIRED");
-                    toast.error(error.response?.data?.message);
-                }
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        if (token) {
-            handleInviteToken();
-        }
-    }, [token])
-
-    // after login checks for the details
-    useEffect(() => {
-        // if (isAuthenticated && token)
-        const checkSession = sessionStorage.getItem("token");
-        if (token === checkSession && isAuthenticated) {
-            toast.success("Welcome back! Completing your invitation...")
-            handleAccepetInvite();
-            sessionStorage.clear();
+    const handleAcceptInvite = async () => {
+        if (!token) {
+            setStatus('invalid');
+            setErrorMessage('This invitation link is missing a valid token.');
+            toast.error('This invitation link is missing a valid token.');
             return;
         }
-    })
 
-    //handle the accepet invitation
-    const handleAccepetInvite = async () => {
         if (!isAuthenticated) {
-            sessionStorage.setItem("token", token);
+            console.info('[invite] Redirecting unauthenticated user to sign in', { token, pathname });
+            sessionStorage.setItem('inviteToken', token);
+            toast.info('Please sign in to continue.');
             router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
             return;
         }
 
-        setLoading(true);
+        setIsAccepting(true);
         try {
-            const res = await acceptInvite(token)
+            console.info('[invite] Accepting invite request', { token });
+            const response = await acceptInvite(token);
+            const conversationId = response?.conversationId;
 
-            const conversationId = res.conversationId;
             if (conversationId) {
+                console.info('[invite] Invite accepted successfully', { token, conversationId });
+                toast.success('Invite accepted. Opening your chat now.');
                 router.push(`/chat?conversationId=${conversationId}`);
             } else {
-                console.log("No Conversation ID is returned from server");
+                console.warn('[invite] Invite accepted without a conversation ID', { token, response });
+                toast.success('Invite accepted. You can open your chats from the dashboard.');
+                router.push('/chat');
             }
         } catch (error) {
-            toast.error(error?.response?.data?.message);
+            const message = error?.response?.data?.message || 'Unable to accept this invitation right now.';
+            console.error('[invite] Failed to accept invite', { token, error: message });
+            toast.error(message);
         } finally {
-            setLoading(false);
+            setIsAccepting(false);
         }
-    }
+    };
 
-    // 1. Loading UI State
-    if (loading) return <p className="text-center p-10"> <Spinner /> </p>
+    useEffect(() => {
+        let isMounted = true;
 
-    // 2. Already Used Link UI State
-    if (errorState === "USED") {
+        const verifyInvite = async () => {
+            if (!token) {
+                if (!isMounted) return;
+                setStatus('invalid');
+                setErrorMessage('This invitation link is missing a valid token.');
+                toast.error('This invitation link is missing a valid token.');
+                return;
+            }
+
+            console.info('[invite] Verifying invite token', { token, pathname });
+            try {
+                setStatus('verifying');
+                const response = await verifyInviteToken(token);
+
+                if (!isMounted) return;
+
+                if (response?.data) {
+                    setInviter(response.data);
+                    setStatus('ready');
+                    setErrorMessage('');
+                } else {
+                    setStatus('invalid');
+                    setErrorMessage('This invitation link is no longer valid.');
+                }
+            } catch (error) {
+                if (!isMounted) return;
+
+                const statusCode = error?.response?.data?.status;
+                const errorCode = error?.response?.data?.code;
+                const message = error?.response?.data?.message || 'This invitation could not be verified.';
+
+                if (statusCode === 410 || errorCode === 'INVITE_TOKEN_USED') {
+                    setStatus('used');
+                    setErrorMessage(message);
+                    toast.warning(message);
+                } else {
+                    setStatus('invalid');
+                    setErrorMessage(message);
+                    toast.error(message);
+                }
+
+                console.error('[invite] Invite verification failed', { token, error: message });
+            }
+        };
+
+        verifyInvite();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [pathname, token]);
+
+    useEffect(() => {
+        const pendingToken = sessionStorage.getItem('inviteToken');
+
+        if (pendingToken && pendingToken === token && isAuthenticated) {
+            console.info('[invite] Session restored. Finishing invite acceptance', { token });
+            sessionStorage.removeItem('inviteToken');
+            toast.success('Welcome back! Completing your invitation...');
+            handleAcceptInvite();
+        }
+    }, [isAuthenticated, token]);
+
+    const renderState = () => {
+        if (status === 'verifying') {
+            return (
+                <Card className="w-full max-w-xl border-border/70 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Loader2Icon className="size-7 animate-spin" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">Checking your invitation</CardTitle>
+                            <CardDescription>We&apos;re validating the link and preparing your next step.</CardDescription>
+                        </div>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        if (status === 'used') {
+            return (
+                <Card className="w-full max-w-xl border-amber-400/50 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+                            <CircleAlert className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">This invite has already been used</CardTitle>
+                            <CardDescription>This link is no longer active. Ask the sender for a fresh invitation if you still need access.</CardDescription>
+                        </div>
+                        <Button onClick={() => router.push('/')} className="w-full sm:w-auto">
+                            Back to home
+                        </Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        if (status === 'invalid' || !inviter) {
+            return (
+                <Card className="w-full max-w-xl border-destructive/40 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                            <CircleAlert className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">Invitation unavailable</CardTitle>
+                            <CardDescription>{errorMessage || 'This link appears to be broken or expired. Please request a new one.'}</CardDescription>
+                        </div>
+                        <Button onClick={() => router.push('/')} className="w-full sm:w-auto">
+                            Back to home
+                        </Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
         return (
-            <Card className="p-10 text-center border-amber-500">
-                <p className='text-xl font-bold text-amber-600'>Link Already Used </p>
-                <p className='text-gray-500 mt-2'>This 1-to-1 invitation link has already been accepted by someone else.</p>
-            </Card>
-        )
-    }
+            <Card className="w-full max-w-xl overflow-hidden border-border/70 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                <CardHeader className="px-6 pb-2 pt-6 sm:px-8">
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                        <Sparkles className="size-4" />
+                        <span>Private chat invite</span>
+                    </div>
+                    <CardTitle className="text-2xl sm:text-3xl">You&apos;ve been invited</CardTitle>
+                    <CardDescription className="max-w-md text-base">
+                        {inviter?.username ? `@${inviter.username}` : 'A teammate'} has invited you to join a secure conversation.
+                    </CardDescription>
+                </CardHeader>
 
-    // 3. Expired or Invalid Link UI State
-    if (errorState === "EXPIRED" || !inviter) {
-        return (
-            <Card className="p-10 text-center border-destructive">
-                <p className='text-xl font-bold text-destructive'>Invitation Invalid </p>
-                <p className='text-gray-500 mt-2'>This link is broken or has expired after its 3-day window.</p>
-            </Card>
-        )
-    }
+                <CardContent className="flex flex-col gap-6 px-6 pb-6 sm:px-8">
+                    <div className="flex flex-col items-center gap-4 rounded-2xl border border-border/70 bg-background/70 p-6 text-center">
+                        <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-primary/10 text-primary shadow-sm">
+                            {inviter?.avatar ? (
+                                <img
+                                    src={inviter.avatar}
+                                    alt={`${inviter.username || 'Invite sender'} avatar`}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <UserRound className="size-9" />
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-lg font-semibold">{inviter?.username ? `@${inviter.username}` : 'Your contact'}</p>
+                            <p className="text-sm text-muted-foreground">One tap and you’ll be inside the conversation.</p>
+                        </div>
+                    </div>
 
-    // 4. Success State (Invite Card is active and pending)
+                    <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm text-muted-foreground sm:grid-cols-2">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="size-4 text-primary" />
+                            Secure private chat access
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <ArrowRight className="size-4 text-primary" />
+                            Quick join in seconds
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <Button onClick={handleAcceptInvite} disabled={isAccepting} className="w-full sm:w-auto">
+                            {isAccepting ? 'Joining chat...' : 'Accept & join chat'}
+                        </Button>
+                        <Button variant="outline" onClick={() => router.push('/')} className="w-full sm:w-auto">
+                            Back to home
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
+
     return (
-        <Card className="p-10 max-w-md mx-auto mt-10 shadow-lg text-center">
-            {inviter.avatar && (
-                <div className="flex justify-center mb-4">
-                    <Image
-                        src={inviter.avatar}
-                        alt="Avatar"
-                        width={96}
-                        height={96}
-                        className='rounded-full bg-sky-400 border-2 border-white shadow-md'
-                    />
-                </div>
-            )}
-            {/* <p> The current path is: {pathname} </p> */}
-            <h2 className='text-2xl font-semibold mb-2'>You are invited!</h2>
-            <p className='text-gray-600 mb-6'>
-                <strong>@{inviter.username}</strong> has invited you to join their chat room.
-            </p>
-
-            <Button className="w-full bg-sky-500 hover:bg-sky-600 cursor-pointer text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
-                onClick={() => handleAccepetInvite()}
-            >
-                Accept & Join Chat
-            </Button>
-
-            {}
-        </Card>
-    )
+        <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-[80vh] max-w-5xl items-center justify-center">
+                {renderState()}
+            </div>
+        </main>
+    );
 }
