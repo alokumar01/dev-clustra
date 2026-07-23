@@ -1,7 +1,6 @@
 pipeline {
 
     agent any
-
     parameters {
         string(
             name: 'IMAGE_TAG',
@@ -50,7 +49,7 @@ pipeline {
         stage('Health Check') {
 
             steps {
-                sh 'curl -f http://13.200.61.98:31935/health'
+                sh 'curl -f https://api.devclustra.aalokkumar.dev/health'
             }
         }
     }

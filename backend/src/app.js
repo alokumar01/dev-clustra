@@ -9,6 +9,7 @@ import errorMiddleware from "./middleswares/error.middleware.js"
 
 const app = express();
 
+app.set("trust proxy", 1);
 // Core Middlewares
 app.use(express.json());
 app.use(cors(corsOptions));

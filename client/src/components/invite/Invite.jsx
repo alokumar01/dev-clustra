@@ -16,6 +16,7 @@ export default function InviteView() {
 
         try {
             const res = await generateInviteToken();
+            console.log("server res from backend:", res)
             setInviteToken(res.data);
             toast.success("Invite link generated successfully");
         } catch (error) {
@@ -88,7 +89,7 @@ export default function InviteView() {
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                                 <div className="min-w-0 flex-1 rounded-3xl bg-slate-900/95 p-4 text-slate-100 ring-1 ring-white/10 sm:p-5">
                                     <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Your invite URL</p>
-                                    <pre className="mt-3 break-after-auto text-sm leading-6 text-slate-100">    
+                                    <pre className="mt-3 break-after-auto text-sm leading-6 text-slate-100">
                                         {inviteToken.fullUrl}
                                     </pre>
                                 </div>

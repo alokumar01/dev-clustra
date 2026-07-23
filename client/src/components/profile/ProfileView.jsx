@@ -22,11 +22,11 @@ export default function ProfileView({ user }) {
 
             <div>
               <h1 className="text-3xl font-bold">
-                {user.username}
+                {user?.username}
               </h1>
 
               <p className="text-gray-500">
-                @{user.username}
+                @{user?.username}
               </p>
 
               <p className="mt-2 text-sm">

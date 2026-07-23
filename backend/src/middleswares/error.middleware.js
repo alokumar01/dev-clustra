@@ -2,8 +2,8 @@ import ApiError from "../helpers/apiError.js";
 
 const errorMiddleware = (err, req, res, next) => {
   console.error("====== ERROR ======");
-  console.error(err);
-  console.error(err.stack);
+  // console.error(err);
+  // console.error(err.stack);
 
   if (err instanceof ApiError) {
     return res.status(err.status).json({

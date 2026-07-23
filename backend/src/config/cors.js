@@ -1,7 +1,8 @@
-import { NODE_ENV } from "./env.js";
+import { NODE_ENV, FRONTEND_URL, COOKIE_DOMAIN } from "./env.js";
 
+console.log("cors page:", FRONTEND_URL);
 export const corsOptions = {
-    origin: process.env.FRONTEND_URL,
+    origin: FRONTEND_URL,
     credentials: true,
 };
 
@@ -9,5 +10,5 @@ export const cookieOptions = {
     httpOnly: true,
     secure: NODE_ENV === "production",
     sameSite: NODE_ENV === "production" ? "none" : "lax",
-    domain: NODE_ENV === "production" ? ".aalokkumar.dev" : undefined,
+    domain: COOKIE_DOMAIN || undefined,
 };
