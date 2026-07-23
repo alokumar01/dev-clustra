@@ -94,7 +94,14 @@ export default function ForgotPassword() {
               </FieldSet>
 
               <Button type="submit" disabled={loading} className="w-full">
-                {<Spinner /> ? "Sending..." : "Send reset link"}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Spinner className="size-4" />
+                    Sending...
+                  </span>
+                ) : (
+                  "Send reset link"
+                )}
               </Button>
             </form>
           ) : (
@@ -106,7 +113,7 @@ export default function ForgotPassword() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full cursor-pointer"
                 onClick={() => router.push("/login")}
               >
                 Go to login

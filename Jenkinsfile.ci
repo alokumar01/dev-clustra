@@ -20,19 +20,22 @@ pipeline {
 
     stages {
 
-        stage('Detect Branch') {
+        stage('Debug Branch') {
             steps {
-                script {
-                    env.CURRENT_BRANCH = sh(
-                        script: "git rev-parse --abbrev-ref HEAD",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "Current Branch: ${env.CURRENT_BRANCH}"
-                }
+                sh '''
+                    echo "===================="
+                    echo "BRANCH_NAME=$BRANCH_NAME"
+                    echo "GIT_BRANCH=$GIT_BRANCH"
+                    echo "GIT_LOCAL_BRANCH=$GIT_LOCAL_BRANCH"
+                    echo "CHANGE_BRANCH=$CHANGE_BRANCH"
+                    echo "CHANGE_TARGET=$CHANGE_TARGET"
+                    git branch -a
+                    git status
+                    echo "===================="
+                '''
             }
         }
-
+        
         stage('Setup pnpm') {
             steps {
                 sh '''
