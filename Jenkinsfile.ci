@@ -6,12 +6,32 @@ pipeline {
         nodejs 'Node22'
     }
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
     environment {
         BACKEND_IMAGE  = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "aalokumar01/dev-clustra-frontend:${BUILD_NUMBER}"
+        CURRENT_BRANCH = ""
     }
 
     stages {
+
+        stage('Detect Branch') {
+            steps {
+                script {
+                    env.CURRENT_BRANCH = sh(
+                        script: "git rev-parse --abbrev-ref HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Current Branch: ${env.CURRENT_BRANCH}"
+                }
+            }
+        }
 
         stage('Setup pnpm') {
             steps {
@@ -39,7 +59,7 @@ pipeline {
             }
         }
 
-        stage('Backend Tests') {
+        stage('Backend Test') {
             steps {
                 dir('backend') {
                     sh 'pnpm test'
@@ -63,76 +83,69 @@ pipeline {
             }
         }
 
-        stage('Build Backend Image') {
+        stage('Docker & Deploy') {
             when {
-                branch 'main'
-            }
-            steps {
-                sh "docker build -t ${BACKEND_IMAGE} ./backend"
-            }
-        }
-
-        stage('Build Frontend Image') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh "docker build -t ${FRONTEND_IMAGE} ./client"
-            }
-        }
-
-        stage('Docker Login') {
-            when {
-                branch 'main'
-            }
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login \
-                        -u "$DOCKER_USER" \
-                        --password-stdin
-                    '''
+                expression {
+                    env.CURRENT_BRANCH == "main"
                 }
             }
-        }
 
-        stage('Push Backend Image') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh "docker push ${BACKEND_IMAGE}"
-            }
-        }
+            stages {
 
-        stage('Push Frontend Image') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh "docker push ${FRONTEND_IMAGE}"
-            }
-        }
+                stage('Build Backend Image') {
+                    steps {
+                        sh "docker build -t ${BACKEND_IMAGE} ./backend"
+                    }
+                }
 
-        stage('Trigger CD') {
-            when {
-                branch 'main'
-            }
-            steps {
-                build job: 'DevClustra CD',
-                    wait: false,
-                    parameters: [
-                        string(
-                            name: 'IMAGE_TAG',
-                            value: "${BUILD_NUMBER}"
-                        )
-                    ]
+                stage('Build Frontend Image') {
+                    steps {
+                        sh "docker build -t ${FRONTEND_IMAGE} ./client"
+                    }
+                }
+
+                stage('Docker Login') {
+                    steps {
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: 'dockerhub-creds',
+                                usernameVariable: 'DOCKER_USER',
+                                passwordVariable: 'DOCKER_PASS'
+                            )
+                        ]) {
+                            sh '''
+                                echo "$DOCKER_PASS" | docker login \
+                                -u "$DOCKER_USER" \
+                                --password-stdin
+                            '''
+                        }
+                    }
+                }
+
+                stage('Push Backend Image') {
+                    steps {
+                        sh "docker push ${BACKEND_IMAGE}"
+                    }
+                }
+
+                stage('Push Frontend Image') {
+                    steps {
+                        sh "docker push ${FRONTEND_IMAGE}"
+                    }
+                }
+
+                stage('Trigger CD') {
+                    steps {
+                        build job: 'DevClustra CD',
+                              wait: false,
+                              parameters: [
+                                  string(
+                                      name: 'IMAGE_TAG',
+                                      value: "${BUILD_NUMBER}"
+                                  )
+                              ]
+                    }
+                }
             }
         }
     }
@@ -141,22 +154,21 @@ pipeline {
 
         always {
             script {
-                if (env.BRANCH_NAME == "main") {
-                    sh """
+                if (env.CURRENT_BRANCH == "main") {
+                    sh '''
                         docker logout || true
-                        docker image rm ${BACKEND_IMAGE} || true
-                        docker image rm ${FRONTEND_IMAGE} || true
-                    """
+                        docker image prune -f || true
+                    '''
                 }
             }
         }
 
         success {
-            echo "✅ CI Pipeline completed successfully."
+            echo "CI completed successfully."
         }
 
         failure {
-            echo "❌ CI Pipeline failed."
+            echo "CI failed."
         }
     }
 }
