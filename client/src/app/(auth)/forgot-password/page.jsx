@@ -1,19 +1,13 @@
 "use client";
 
-import { ArrowRight, MailCheck } from "lucide-react";
+import { ArrowRight, KeyRound, MailCheck, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { forgotPassword } from "@/app/services/auth.service";
+import { AuthShell } from "@/components/ui/auth-shell";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Field,
   FieldGroup,
@@ -30,8 +24,8 @@ export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
     setLoading(true);
 
     try {
@@ -46,83 +40,94 @@ export default function ForgotPassword() {
 
       window.setTimeout(() => {
         router.push("/login");
-      }, 1400);
+      }, 1800);
     } catch (submitError) {
-      const errorMessage =
-        submitError?.response?.data?.message || "Something went wrong. Please try again.";
-
-      toast.error(errorMessage);
+      toast.error(
+        submitError?.response?.data?.message ||
+          "Unable to send the reset link. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10 text-foreground sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md border-border/70 bg-card/90 shadow-[0_20px_60px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
-        <CardHeader className="space-y-2 px-6 pt-6 sm:px-8">
-          <div className="flex items-center gap-2 text-sm font-medium text-primary">
-            <MailCheck className="size-4" />
-            <span>Forgot password</span>
+    <AuthShell
+      badge="Password recovery"
+      title={submitted ? "Check your email" : "Forgot password"}
+      description={
+        submitted
+          ? "The next step has been sent to the email address you provided."
+          : "Enter the email connected to your account."
+      }
+      // heroTitle="Recover access without changing the login flow."
+      // heroDescription="Password recovery uses a reset-token email flow, then returns the user to the standard login screen."
+      // highlights={[
+      //   {
+      //     icon: MailCheck,
+      //     title: "Email reset link",
+      //     description:
+      //       "The reset request is handled by the existing forgot-password API.",
+      //   },
+      //   {
+      //     icon: KeyRound,
+      //     title: "Token-based reset",
+      //     description:
+      //       "The reset page reads the token from the URL before submitting the new password.",
+      //   },
+      //   {
+      //     icon: ShieldCheck,
+      //     title: "Session cleanup",
+      //     description:
+      //       "After password reset, existing refresh tokens are cleared by the backend service.",
+      //   },
+      // ]}
+      alternatePrompt="Remember your password?"
+      alternateHref="/login"
+      alternateLabel="Sign in"
+    >
+      {!submitted ? (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <FieldSet>
+            <FieldGroup className="gap-4">
+              <Field>
+                <FieldLabel htmlFor="email">Email address</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="h-11 rounded-xl bg-background"
+                />
+              </Field>
+            </FieldGroup>
+          </FieldSet>
+
+          <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl text-sm font-semibold cursor-pointer">
+            {loading ? <Spinner /> : "Send reset link"}
+            <ArrowRight className="size-4" />
+          </Button>
+        </form>
+      ) : (
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm text-muted-foreground">
+          <div className="flex items-start gap-3 font-medium text-foreground">
+            <MailCheck className="mt-0.5 size-4 shrink-0 text-blue-600" />
+            <span>{message}</span>
           </div>
-          <CardTitle className="text-2xl">Reset your password</CardTitle>
-          <CardDescription>
-            {submitted
-              ? "We’ve sent the next step to your inbox. You’ll be redirected to login shortly."
-              : "Enter your email and we’ll help you get back into your account."}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="px-6 pb-6 sm:px-8">
-          {!submitted ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <FieldSet>
-                <FieldGroup className="gap-4">
-                  <Field>
-                    <FieldLabel htmlFor="email">Email address</FieldLabel>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="h-11 rounded-xl bg-background"
-                    />
-                  </Field>
-                </FieldGroup>
-              </FieldSet>
-
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Spinner className="size-4" />
-                    Sending...
-                  </span>
-                ) : (
-                  "Send reset link"
-                )}
-              </Button>
-            </form>
-          ) : (
-            <div className="space-y-4 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2 font-medium text-foreground">
-                <MailCheck className="size-4 text-primary" />
-                {message}
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full cursor-pointer"
-                onClick={() => router.push("/login")}
-              >
-                Go to login
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </main>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full rounded-xl"
+            onClick={() => router.push("/login")}
+          >
+            Go to login
+            <ArrowRight className="size-4" />
+          </Button>
+        </div>
+      )}
+    </AuthShell>
   );
 }

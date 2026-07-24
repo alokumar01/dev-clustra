@@ -15,27 +15,10 @@ pipeline {
     environment {
         BACKEND_IMAGE  = "aalokumar01/dev-clustra-backend:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "aalokumar01/dev-clustra-frontend:${BUILD_NUMBER}"
-        CURRENT_BRANCH = ""
     }
 
     stages {
 
-        stage('Debug Branch') {
-            steps {
-                sh '''
-                    echo "===================="
-                    echo "BRANCH_NAME=$BRANCH_NAME"
-                    echo "GIT_BRANCH=$GIT_BRANCH"
-                    echo "GIT_LOCAL_BRANCH=$GIT_LOCAL_BRANCH"
-                    echo "CHANGE_BRANCH=$CHANGE_BRANCH"
-                    echo "CHANGE_TARGET=$CHANGE_TARGET"
-                    git branch -a
-                    git status
-                    echo "===================="
-                '''
-            }
-        }
-        
         stage('Setup pnpm') {
             steps {
                 sh '''
@@ -87,9 +70,10 @@ pipeline {
         }
 
         stage('Docker & Deploy') {
+
             when {
                 expression {
-                    env.CURRENT_BRANCH == "main"
+                    env.GIT_BRANCH == 'origin/main'
                 }
             }
 
@@ -118,8 +102,8 @@ pipeline {
                         ]) {
                             sh '''
                                 echo "$DOCKER_PASS" | docker login \
-                                -u "$DOCKER_USER" \
-                                --password-stdin
+                                    -u "$DOCKER_USER" \
+                                    --password-stdin
                             '''
                         }
                     }
@@ -149,15 +133,17 @@ pipeline {
                               ]
                     }
                 }
+
             }
         }
+
     }
 
     post {
 
         always {
             script {
-                if (env.CURRENT_BRANCH == "main") {
+                if (env.GIT_BRANCH?.endsWith('/main')) {
                     sh '''
                         docker logout || true
                         docker image prune -f || true
