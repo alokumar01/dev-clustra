@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowRight, KeyRound, ShieldCheck, Zap } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight } from "lucide-react";
 import {
   loginWithAxios,
   resendVerificationEmail,
@@ -10,13 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { AuthShell } from "@/components/ui/auth-shell";
 import { toast } from "sonner";
@@ -100,30 +100,8 @@ export default function LoginPage() {
   return (
     <AuthShell
       badge="Welcome back"
-      title="Sign in to your workspace"
-      description="Access your projects, continue building, and connect to your backend auth flow from one clean place."
-      heroTitle="A cleaner auth experience for fast-moving product teams."
-      heroDescription="Login should feel focused and trustworthy. This refreshed flow keeps the form simple while giving the page enough structure to feel polished on desktop and mobile."
-      highlights={[
-        {
-          icon: ShieldCheck,
-          title: "Clear and reliable",
-          description:
-            "Simple validation states and clearer messaging reduce friction when something goes wrong.",
-        },
-        {
-          icon: Zap,
-          title: "Built for momentum",
-          description:
-            "Faster scanning, stronger hierarchy, and a layout that feels intentional instead of placeholder.",
-        },
-        {
-          icon: KeyRound,
-          title: "Ready for auth APIs",
-          description:
-            "Designed to support the backend login flow you already wired up without changing behavior.",
-        },
-      ]}
+      title="Sign in to DevClustra"
+      description="Use your verified account to continue to the collaboration workspace."
       alternatePrompt="Don't have an account yet?"
       alternateHref="/signup"
       alternateLabel="Create one"
@@ -151,19 +129,20 @@ export default function LoginPage() {
 
             <Field>
               <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="current-password"
                 required
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
-                className="h-11 rounded-xl bg-background"
+                inputClassName="h-11 rounded-xl bg-background"
               />
-              <div className="flex justify-end underline">
-                <Link href="/forgot-password">Forgot Password</Link>
+              <div className="flex justify-end">
+                <Link href="/forgot-password" className="text-sm font-medium text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline">
+                  Forgot password?
+                </Link>
               </div>
             </Field>
 
@@ -171,12 +150,12 @@ export default function LoginPage() {
         </FieldSet>
 
         {showVerifyUI && (
-          <FieldError>
-            Please verify your account First
+          <FieldError className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 leading-6">
+            Please verify your account before signing in.{" "}
             <Button
               type="button"
               variant="link"
-              className="p-0 h-auto underline text-blue-600"
+              className="h-auto p-0 text-blue-600 underline"
               onClick={handleResendVerification}
             >
               Resend verification email
@@ -187,17 +166,15 @@ export default function LoginPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full rounded-xl text-sm font-semibold cursor-pointer"
+          className="h-11 w-full cursor-pointer rounded-xl text-sm font-semibold"
         >
-          {loading ? <Spinner /> : "Login"}
+          {loading ? <Spinner /> : "Sign in"}
           <ArrowRight className="size-4" />
         </Button>
 
         <Separator />
 
-        <p className="text-center text-sm leading-6 text-muted-foreground">
-          {/* Secure access for your Dev Clustra workspace and connected projects. */}
-        </p>
+
       </form>
     </AuthShell>
   );

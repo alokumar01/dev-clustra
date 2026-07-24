@@ -1,51 +1,109 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { toast } from 'sonner';
-import { verifyVerificationEmail } from '@/app/services/auth.service';
-import { Spinner } from '@/components/ui/spinner';
+import { ArrowRight, CheckCircle2, MailCheck, ShieldCheck, XCircle } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import { verifyVerificationEmail } from "@/app/services/auth.service";
+import { AuthShell } from "@/components/ui/auth-shell";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function VerifyEmail() {
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
   const [status, setStatus] = useState("loading");
+  const [message, setMessage] = useState("Verifying your email address.");
 
   useEffect(() => {
     async function verify() {
+      if (!token) {
+        setStatus("error");
+        setMessage("Verification token is missing.");
+        return;
+      }
+
       try {
         setStatus("loading");
-
-        const res = await verifyVerificationEmail(token);
-        // toast.success(res.message);
-        setStatus("success")
+        const response = await verifyVerificationEmail(token);
+        setStatus("success");
+        setMessage(response?.message || "Your email has been verified.");
       } catch (error) {
-        // toast.error(
-        //   (error.response?.data?.message || "Verification failed")
-        // )
-        setStatus("error")
+        const errorMessage =
+          error.response?.data?.message ||
+          "Verification failed or the link has expired.";
+
+        setStatus("error");
+        setMessage(errorMessage);
+        toast.error(errorMessage);
       }
     }
-    if (token) verify();
+
+    verify();
   }, [token]);
 
+  const isLoading = status === "loading";
+  const isSuccess = status === "success";
+  const StatusIcon = isLoading ? Spinner : isSuccess ? CheckCircle2 : XCircle;
+
   return (
-    <div className='flex items-center justify-center h-screen'>
-      {status === "loading" && (
-        <div className='flex items-center gap-4'>
-          Verifying your email... 
-          <Spinner />
+    <AuthShell
+      badge="Email verification"
+      title={isSuccess ? "Email verified" : isLoading ? "Verifying email" : "Verification failed"}
+      description={
+        isSuccess
+          ? "Your account is ready for login."
+          : "This page checks the verification token from your email link."
+      }
+      heroTitle="Email verification keeps the account flow explicit."
+      heroDescription="The verification route reads the token from the URL, calls the backend verification API, and shows a clear result state."
+      highlights={[
+        {
+          icon: MailCheck,
+          title: "Verification email",
+          description:
+            "Signup sends a tokenized email link before login is allowed.",
+        },
+        {
+          icon: ShieldCheck,
+          title: "Backend validation",
+          description:
+            "The token is validated by the existing verification endpoint.",
+        },
+        {
+          icon: CheckCircle2,
+          title: "Clear next step",
+          description:
+            "Successful verification sends the user back to the login flow.",
+        },
+      ]}
+      alternatePrompt="Already verified?"
+      alternateHref="/login"
+      alternateLabel="Sign in"
+    >
+      <div className="space-y-5 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-border bg-secondary/70">
+          <StatusIcon className={isSuccess ? "size-7 text-green-600" : isLoading ? "size-6" : "size-7 text-destructive"} />
         </div>
-      )}
-
-      {status === "success" && (
-        <div className='text-green-600 text-lg'> Your Email has been verified successfully! </div>
-      )}
-
-      {status === "error" && (
-        <div className='text-red-600 text-lg'> Verification failed or token expired request new ones from login page! </div>
-      )}
-
-    </div>
-  )
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">{message}</h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {isSuccess
+              ? "You can now sign in with your email and password."
+              : isLoading
+                ? "This usually takes a moment."
+                : "Request a new verification email from the login page if the link is expired."}
+          </p>
+        </div>
+        <Button asChild className="h-11 w-full rounded-xl text-sm font-semibold">
+          <Link href="/login">
+            {isSuccess ? "Go to login" : "Back to login"}
+            <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+      </div>
+    </AuthShell>
+  );
 }

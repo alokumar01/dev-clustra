@@ -12,7 +12,7 @@ pipeline {
         string(
             name: 'IMAGE_TAG',
             defaultValue: 'latest',
-            description: 'Docker image tag to deploy'
+            description: 'Docker image tag'
         )
     }
 
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     if (!params.IMAGE_TAG?.trim()) {
-                        error("IMAGE_TAG cannot be empty.")
+                        error("IMAGE_TAG cannot be empty")
                     }
                 }
             }
@@ -36,63 +36,88 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                 sshagent(['ec2-ssh-key']) {
+
                     sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
+                    ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
                         sudo kubectl set image deployment/devclustra-backend \
                         backend=$BACKEND_IMAGE
-                        '
+                    '
                     """
+
                 }
             }
         }
 
         stage('Wait for Rollout') {
             steps {
+
                 timeout(time: 5, unit: 'MINUTES') {
+
                     sshagent(['ec2-ssh-key']) {
+
                         sh """
-                            ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
+                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
                             sudo kubectl rollout status deployment/devclustra-backend
-                            '
+                        '
                         """
+
                     }
+
                 }
+
             }
         }
 
         stage('Verify Deployment') {
             steps {
+
                 sshagent(['ec2-ssh-key']) {
+
                     sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
+                    ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST '
+
+                        echo "Deployment Image:"
                         sudo kubectl get deployment devclustra-backend \
                         -o=jsonpath="{.spec.template.spec.containers[0].image}"
+
                         echo
-                        '
+
+                        echo "Pods:"
+                        sudo kubectl get pods
+
+                    '
                     """
+
                 }
+
             }
         }
 
         stage('Health Check') {
             steps {
+
                 sh '''
-                    curl --retry 5 \
-                         --retry-delay 5 \
-                         --fail \
-                         https://api.devclustra.aalokkumar.dev/health
+                curl --retry 5 \
+                     --retry-delay 5 \
+                     --fail \
+                     https://api.devclustra.aalokkumar.dev/health
                 '''
+
             }
         }
+
     }
 
     post {
+
         success {
-            echo "Backend deployed successfully."
+            echo "Deployment completed successfully."
         }
 
         failure {
             echo "Deployment failed."
         }
+
     }
+
 }
