@@ -8,39 +8,36 @@ export default function ChatBubble({ message, selectedChat }) {
   const user = useAuthStore((state) => state.user);
 
   const isMe = message.senderId === user?._id;
-  const avatar = isMe ? user?.avatar : selectedChat?.chatWith?.avatar;
+  // const avatar = isMe ? user?.avatar : selectedChat?.chatWith?.avatar;
+  // const fallback = isMe ? user?.username?.[0] : selectedChat?.chatWith?.username?.[0];
   // const name = isMe ? "You" : selectedChat?.chatWith?.username;
 
   return (
-    <div className={`flex w-full mb-4 ${isMe ? "justify-end" : "justify-start"}`}>
+    <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
       <div
-        className={`flex gap-2 max-w-[70%] ${
+        className={`flex min-w-0 max-w-[88%] gap-2 sm:max-w-[72%] lg:max-w-[66%] ${
           isMe ? "flex-row-reverse" : ""
         }`}
       >
-        {/* Avatar */}
-        <Avatar className="w-8 h-8 shrink-0">
+        {/* <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage src={avatar} alt="avatar" />
-          <AvatarFallback>U</AvatarFallback>
-        </Avatar>
+          <AvatarFallback>{ "U"}</AvatarFallback>
+        </Avatar> */}
 
-        {/* Bubble */}
         <div
-          className={`px-4 py-2 rounded-2xl ${
+          className={`min-w-0 rounded-2xl px-4 py-2 shadow-sm ${
             isMe
-              ? "bg-gradient-to-r from-green-400 to-green-600 text-white rounded-br-none"
-              : "bg-gray-200 text-gray-800 rounded-bl-none"
+              ? "rounded-br-md bg-primary text-primary-foreground"
+              : "rounded-bl-md border border-border bg-background text-foreground"
           }`}
         >
-          {/* Message */}
-          <p className="text-sm break-words">{message.content}</p>
+          <p className="break-words text-sm leading-6">{message.content}</p>
 
-          {/* Footer */}
           <div
             className={`flex items-center gap-1 mt-1 text-[11px] ${
               isMe
-                ? "justify-end text-white/80"
-                : "justify-end text-gray-500"
+                ? "justify-end text-primary-foreground/80"
+                : "justify-end text-muted-foreground"
             }`}
           >
             <span>
@@ -54,12 +51,10 @@ export default function ChatBubble({ message, selectedChat }) {
               <>
                 {/* READ */}
                 {message.readAt ? (
-                  <span className="text-sky-400"><CheckCheck size={14} /></span>
+                  <span className="text-primary-foreground"><CheckCheck size={14} /></span>
                 ) : message.deliveredAt ? (
-                  /* DELIVERED */
                   <span><CheckCheck size={14} /></span>
                 ) : (
-                  /* SENT */
                   <span><Check size={14} /></span>
                 )}
               </>

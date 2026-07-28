@@ -68,7 +68,7 @@ export default function ChatMessages({
     return () => {
       container.removeEventListener("scroll", handleScroll);
     };
-  }, [onLoadOlder]);
+  }, [hasMore, isLoadingMore, onLoadOlder]);
 
   // initial scroll bottom + new message scroll
   useEffect(() => {
@@ -113,13 +113,21 @@ export default function ChatMessages({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50"
+      className="flex-1 overflow-y-auto bg-secondary/35 px-3 py-4 sm:px-4"
     >
-      <div className="space-y-4">
+      <div className="flex w-full flex-col gap-3">
         {isLoadingMore && (
             <div className="flex justify-center py-3">
-                <div className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-blue-500" />
             </div>
+        )}
+        {messages.length === 0 && (
+          <div className="flex min-h-[45vh] items-center justify-center">
+            <div className="rounded-2xl border border-dashed border-border bg-background/70 px-6 py-5 text-center shadow-sm">
+              <h2 className="font-semibold">No messages yet</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Send the first message to start this conversation.</p>
+            </div>
+          </div>
         )}
         {messages.map((message) => (
           <ChatBubble

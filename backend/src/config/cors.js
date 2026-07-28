@@ -1,6 +1,6 @@
 import { NODE_ENV, FRONTEND_URL, COOKIE_DOMAIN } from "./env.js";
 
-console.log("cors page:", FRONTEND_URL);
+// console.log("cors page:", FRONTEND_URL);
 export const corsOptions = {
     origin: FRONTEND_URL,
     credentials: true,

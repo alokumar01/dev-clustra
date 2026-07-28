@@ -1,123 +1,111 @@
-import { Card } from "../ui/card";
-import Image from "next/image";
-import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import EditProfileDialog from "./EditProfileDialog";
+import { CalendarDays, CheckCircle2, Mail, UserRound } from "lucide-react";
 
 export default function ProfileView({ user }) {
+  const username = user?.username || "Developer";
+  const email = user?.email || "No email available";
+  const joined = user?.createdAt ? formatDate(user.createdAt) : "Recently";
+
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <section className="mx-auto w-full max-w-5xl space-y-5 p-4 sm:p-6">
+      <Card className="border-border/80 bg-background/95 shadow-sm">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+              <Avatar className="size-24 ring-4 ring-primary/10">
+                <AvatarImage src={user?.avatar} alt={`${username} avatar`} />
+                <AvatarFallback className="text-2xl">
+                  {username[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
 
-      {/* Header */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex gap-5 items-center">
-            <Image
-              src={user?.avatar}
-              alt="profile"
-              width={100}
-              height={100}
-              className="rounded-full border"
-              unoptimized
-            />
-
-            <div>
-              <h1 className="text-3xl font-bold">
-                {user?.username}
-              </h1>
-
-              <p className="text-gray-500">
-                @{user?.username}
-              </p>
-
-              <p className="mt-2 text-sm">
-                {user.bio || "No bio added yet"}
-              </p>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+                    {username}
+                  </h1>
+                  {user?.isEmailVerified && (
+                    <Badge variant="outline" className="h-7 rounded-full border-[var(--success)]/30 bg-[var(--success)]/10 text-[var(--success)]">
+                      <CheckCircle2 className="size-3.5" />
+                      Verified
+                    </Badge>
+                  )}
+                </div>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  @{username}
+                </p>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {user?.bio || "No bio added yet."}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <Button>
             <EditProfileDialog user={user} />
-          </Button>
-        </div>
+          </div>
+        </CardContent>
       </Card>
 
-      {/* Personal Information */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">
-          Personal Information
-        </h2>
+      <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <Card className="border-border/80 bg-background/95 shadow-sm">
+          <CardHeader>
+            <CardTitle>Profile Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-5 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
+            <InfoTile icon={UserRound} label="Username" value={username} />
+            <InfoTile icon={Mail} label="Email" value={email} />
+            <InfoTile icon={CalendarDays} label="Joined" value={joined} />
+            <InfoTile
+              icon={CheckCircle2}
+              label="Email Status"
+              value={user?.isEmailVerified ? "Verified" : "Not verified"}
+            />
+          </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-2 gap-4">
-          <InfoRow
-            label="Username"
-            value={user.username}
-          />
-
-          <InfoRow
-            label="Email"
-            value={user.email}
-          />
-
-          <InfoRow
-            label="Bio"
-            value={user.bio || "Not provided"}
-          />
-        </div>
-      </Card>
-
-      {/* Account Details */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">
-          Account Details
-        </h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          <InfoRow
-            label="Status"
-            value={user.accountStatus}
-          />
-
-          <InfoRow
-            label="Email Verified"
-            value={user.isEmailVerified ? "✅ Verified" : "❌ Not Verified"}
-          />
-
-          <InfoRow
-            label="Joined"
-            value={new Date(user.createdAt).toLocaleDateString()}
-          />
-
-          <InfoRow
-            label="Last Updated"
-            value={new Date(user.updatedAt).toLocaleDateString()}
-          />
-
-          <InfoRow
-            label="Last Username Change"
-            value={
-              user.lastUsernameChange
-                ? new Date(
-                    user.lastUsernameChange
-                  ).toLocaleDateString()
-                : "Never"
-            }
-          />
-        </div>
-      </Card>
-    </div>
+        <Card className="border-border/80 bg-primary text-primary-foreground shadow-sm">
+          <CardContent className="flex h-full flex-col justify-between gap-6 p-5 sm:p-6">
+            <div>
+              <p className="text-sm font-medium text-primary-foreground/75">
+                DevClustra Profile
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+                Built around your workspace identity.
+              </h2>
+            </div>
+            <p className="text-sm leading-6 text-primary-foreground/80">
+              Keep your username, bio, and avatar current so teammates can
+              recognize you quickly in chats.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
   );
 }
 
-function InfoRow({ label, value }) {
+function InfoTile({ icon: Icon, label, value }) {
   return (
-    <div>
-      <p className="text-sm text-gray-500">
+    <div className="rounded-xl border border-border bg-secondary/35 p-4">
+      <div className="mb-3 flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="size-4" />
+      </div>
+      <p className="text-xs font-medium uppercase text-muted-foreground">
         {label}
       </p>
-
-      <p className="font-medium">
+      <p className="mt-1 break-words font-medium">
         {value}
       </p>
     </div>
   );
+}
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
 }

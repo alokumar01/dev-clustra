@@ -1,33 +1,37 @@
-// src/components/chat/ChatHeader.jsx
 import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from '../ui/avatar';
 import { Button } from '../ui/button';
-import { Phone, Video, Info } from 'lucide-react';
+import { ArrowLeft, Info, Phone, Video } from 'lucide-react';
 
-export default function ChatHeader({ selectedChat, isOnline }) {
+export default function ChatHeader({ selectedChat, isOnline, onBack }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-white border-b shadow-sm">
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarImage src={selectedChat?.chatWith?.avatar} />
-          <AvatarFallback>{selectedChat?.chatWith?.username?.[0] || 'U'}</AvatarFallback>
-          <AvatarBadge className={isOnline ? 'bg-green-500' : 'bg-gray-400'} />
-        </Avatar>
-        <div>
-          <h2 className="font-semibold">{selectedChat?.chatWith?.username || 'Unknown'}</h2>
-          <p className="text-sm text-gray-500">{isOnline ? 'Online' : 'Offline'}</p>
+    <header className="border-b border-border/70 bg-background/90 px-3 py-3 shadow-sm backdrop-blur-xl sm:px-4">
+      <div className="flex w-full items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button variant="ghost" size="icon" className="rounded-xl md:hidden" onClick={onBack} aria-label="Back to conversations">
+            <ArrowLeft className="size-5" />
+          </Button>
+          <Avatar className="size-10">
+            <AvatarImage src={selectedChat?.chatWith?.avatar} />
+            <AvatarFallback>{selectedChat?.chatWith?.username?.[0] || 'U'}</AvatarFallback>
+            <AvatarBadge className={isOnline ? 'bg-[var(--online)]' : 'bg-muted-foreground'} />
+          </Avatar>
+          <div className="min-w-0">
+            <h2 className="truncate font-semibold">{selectedChat?.chatWith?.username || 'Unknown'}</h2>
+            <p className="text-sm text-muted-foreground">{isOnline ? 'Online' : 'Offline'}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Start voice call">
+            <Phone className="size-[18px]" />
+          </Button>
+          <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Start video call">
+            <Video className="size-[18px]" />
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-xl" aria-label="Conversation info">
+            <Info className="size-[18px]" />
+          </Button>
         </div>
       </div>
-      <div className="flex gap-2">
-        <Button variant="ghost" size="icon">
-          <Phone size={18} />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Video size={18} />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Info size={18} />
-        </Button>
-      </div>
-    </div>
+    </header>
   );
 }

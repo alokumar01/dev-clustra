@@ -11,8 +11,7 @@ import { socket } from "@/store/socketStore"
 
 
 
-export default function ChatScreen({ selectedChat }) {
-  console.log("chat screen selected chat testing: ", selectedChat);
+export default function ChatScreen({ selectedChat, onBack }) {
   const user = useAuthStore((state) => state.user);
   // console.log("user from chat screen:", user)
   const emptyMessages = useRef([]);
@@ -104,7 +103,7 @@ export default function ChatScreen({ selectedChat }) {
 
     fetchMessages();
     markRead();
-  }, [selectedChat._id, markConversationRead, setMessagesForConversation, updateConversationMeta]);
+  }, [conversationId, selectedChat._id, markConversationRead, setMessagesForConversation, updateConversationMeta]);
 
 
   // load older messages when user reaches top
@@ -180,8 +179,8 @@ export default function ChatScreen({ selectedChat }) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <ChatHeader selectedChat={selectedChat} isOnline={isOnline} />
+    <div className="flex h-full min-w-0 flex-col bg-background">
+      <ChatHeader selectedChat={selectedChat} isOnline={isOnline} onBack={onBack} />
       {/* <ScrollArea className="h-full"> */}
         <ChatMessages
           messages={messages}
