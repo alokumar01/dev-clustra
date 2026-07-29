@@ -6,6 +6,8 @@ import Image from "next/image";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -15,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 
 import {
   Camera,
@@ -37,11 +38,11 @@ export default function EditProfileDialog({ user }) {
   const [loading, setLoading] = useState(false);
 
   const getMe = useAuthStore((state) => state.getMe);
-  const [preview, setPreview] = useState(user.avatar);
+  const [preview, setPreview] = useState(user?.avatar || "");
 
   const [formData, setFormData] = useState({
-    username: user.username,
-    bio: user.bio || "",
+    username: user?.username || "",
+    bio: user?.bio || "",
     avatar: null,
   });
 
@@ -74,8 +75,8 @@ export default function EditProfileDialog({ user }) {
       const hasAvatarChange = !!formData.avatar;
 
       const hasProfileChanges =
-        formData.username !== user.username ||
-        formData.bio !== (user.bio || "");
+        formData.username.trim() !== user?.username ||
+        formData.bio.trim() !== (user?.bio || "");
 
       if (!hasAvatarChange && !hasProfileChanges) {
         toast.info("No changes detected");
@@ -128,47 +129,48 @@ export default function EditProfileDialog({ user }) {
       onOpenChange={setOpen}
     >
       <DialogTrigger asChild>
-        <Button variant="primary">
+        <Button className="w-full rounded-xl sm:w-auto cursor-pointer">
           Edit Profile
         </Button>
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-lg"
-        aria-describedby="edit-profile-description"
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 sm:max-w-xl"
       >
-        <DialogHeader>
-          <DialogTitle>
-            Edit Profile Dupliate
+        <DialogHeader className="border-b border-border px-5 py-4 sm:px-6">
+          <DialogTitle className="text-lg">
+            Edit Profile
           </DialogTitle>
+          <DialogDescription>
+            Update the details teammates see across DevClustra.
+          </DialogDescription>
         </DialogHeader>
 
-        <p
-          id="edit-profile-description"
-          className="sr-only"
-        >
-          Edit your profile information.
-        </p>
-
-        <div className="space-y-6">
+        <div className="space-y-6 px-5 py-5 sm:px-6">
           {/* Avatar */}
 
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-secondary/35 p-5 sm:flex-row">
             <label
               htmlFor="avatar-upload"
-              className="cursor-pointer"
+              className="shrink-0 cursor-pointer"
             >
               <div className="relative">
-                <Image
-                  src={preview}
-                  alt="profile avatar"
-                  width={110}
-                  height={110}
-                  unoptimized
-                  className="rounded-full border object-cover"
-                />
+                {preview ? (
+                  <Image
+                    src={preview}
+                    alt="profile avatar"
+                    width={104}
+                    height={104}
+                    unoptimized
+                    className="aspect-square rounded-full border object-cover"
+                  />
+                ) : (
+                  <div className="flex size-[104px] items-center justify-center rounded-full border bg-muted text-3xl font-semibold text-muted-foreground">
+                    {formData.username?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
 
-                <div className="absolute bottom-0 right-0 rounded-full border bg-background p-2 shadow">
+                <div className="absolute bottom-0 right-0 rounded-full border bg-background p-2 shadow-sm">
                   <Camera className="h-4 w-4" />
                 </div>
               </div>
@@ -182,12 +184,13 @@ export default function EditProfileDialog({ user }) {
               onChange={handleImageChange}
             />
 
-            <p className="text-xs text-muted-foreground">
-              Click avatar to upload a new image
-            </p>
+            <div className="text-center sm:text-left">
+              <p className="text-sm font-medium">Profile photo</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Choose a clear square image so your avatar stays sharp in chat.
+              </p>
+            </div>
           </div>
-
-          <Separator />
 
           {/* Username */}
 
@@ -240,34 +243,33 @@ export default function EditProfileDialog({ user }) {
             </div>
           </div>
 
-          {/* Actions */}
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={loading}
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              type="button"
-              disabled={loading}
-              onClick={handleSubmit}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </div>
         </div>
+
+        <DialogFooter className="rounded-b-xl">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="button"
+            disabled={loading}
+            onClick={handleSubmit}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

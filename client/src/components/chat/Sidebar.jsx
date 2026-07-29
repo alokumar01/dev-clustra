@@ -1,11 +1,9 @@
-// src/components/chat/Sidebar.jsx
-
-
-import { LogOutIcon } from 'lucide-react';
+import { Boxes, LogOutIcon } from 'lucide-react';
 import { MessageSquare, Users, Settings2, CircleUserRoundIcon, PhoneCallIcon, UserRoundPlusIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuthStore } from '../../store/authStore';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export default function Sidebar({ activeIcon, onIconClick }) {
   const logout = useAuthStore((state) => state.logout);
@@ -22,47 +20,41 @@ export default function Sidebar({ activeIcon, onIconClick }) {
   ];
 
   return (
-    <div className="w-15 bg-white shadow-sm flex flex-col items-center py-4 gap-4 md:flex">
-      {/* Logo */}
-      <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold">
-        Dev Chat
+    <aside className="hidden h-full w-[60px] shrink-0 flex-col items-center border-r border-border/70 bg-background/90 px-3 py-4 shadow-sm backdrop-blur-xl md:flex">
+      <div className="mb-3 flex size-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm shadow-blue-600/20" title="DevClustra">
+        <Boxes className="size-5" />
       </div>
 
-      {/* Icons */}
-      {icons.map(({ id, icon: Icon, label }) => (
-        <Button
-          variant="ghost"
-          key={id}
-          onClick={() => onIconClick(id)}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-            activeIcon === id
-              ? 'bg-orange-100 text-orange-600'
-              : 'text-gray-500 hover:bg-gray-100'
-          }`}
-          title={label}
-        >
-          <Icon size={20} />
-        </Button>
-      ))}
+      <nav className="flex flex-1 flex-col items-center gap-2" aria-label="Chat navigation">
+        {icons.map(({ id, icon: Icon, label }) => (
+          <Button
+            variant="ghost"
+            key={id}
+            onClick={() => onIconClick(id)}
+            className={cn(
+              "size-9 rounded-2xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground cursor-pointer",
+              activeIcon === id && "bg-blue-600 text-white hover:bg-blue-600 hover:text-white"
+            )}
+            title={label}
+            aria-label={label}
+          >
+            <Icon className="size-5" />
+          </Button>
+        ))}
+      </nav>
 
-      {/* Logout button bottom */}
-      <div className="mt-auto">
-        {/* // Logout button */}
-        <Button
-          variant="ghost"
-          onClick={async () => {
-            await logout();
-            router.replace('/login');
-          }}
-          className={`w-10 h-10  rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-            'text-gray-500 hover:bg-red-500'
-          }`}
-
-          title="Logout"
-        >
-          <LogOutIcon size={20} />
-        </Button>
-      </div>
-    </div>
+      <Button
+        variant="ghost"
+        onClick={async () => {
+          await logout();
+          router.replace('/login');
+        }}
+        className="size-11 cursor-pointer rounded-2xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+        title="Logout"
+        aria-label="Logout"
+      >
+        <LogOutIcon className="size-5" />
+      </Button>
+    </aside>
   );
 }
