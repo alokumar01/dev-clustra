@@ -1,21 +1,22 @@
+// import { Geist, Geist_Mono } from "next/font/google";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css"
 import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/components/Provider/AuthProvider";
 import SocketProvider from "@/components/Provider/SocketProvider";
 import ThemeProvider from "@/components/Provider/ThemeProvider";
-import Header from "@/components/pages/Header";
-import Footer from "@/components/pages/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// ${geistSans.variable} ${geistMono.variable} 
 
 export const metadata = {
   title: "DevClustra - Real Time Collaboration Tool",
@@ -27,7 +28,7 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* {children} */}

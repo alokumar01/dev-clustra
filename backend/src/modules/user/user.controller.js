@@ -11,7 +11,7 @@ export const updateAvatarController = async (req, res, next) => {
         }
 
         //to delte the image we need to find the user as well
-        //NOTE, do not implemtned business logic here send this part into services, 
+        //NOTE, do not implemtned business logic here send this part into services,
         //TODO:send this into businness logic into services
         const user = await User.findById(req.user._id);
 
@@ -52,7 +52,7 @@ export const searchUsersController = async (req, res, next) => {
             message: "List of all data",
             data: users
         });
-            
+
     } catch (error) {
         next(error);
     }

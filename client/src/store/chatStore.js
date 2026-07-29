@@ -4,6 +4,13 @@ export const useChatStore = create((set, get) => ({
   conversations: [],
   selectedChat: null,
   messagesByConversation: {},
+  // search result in conversation
+  searchResults: [],
+
+  setSearchResults: (users) =>
+    set({
+      searchResults: users
+    }),
 
   // NEW: online users
   onlineUsers: new Set(),

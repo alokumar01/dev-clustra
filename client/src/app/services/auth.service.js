@@ -10,7 +10,7 @@ export async function loginWithAxios(credentials) {
   }
 }
 
-// sign up 
+// sign up
 export async function signupWithAxios(credentials) {
   try {
     const response = await api.post("/auth/signup", credentials);
@@ -20,10 +20,10 @@ export async function signupWithAxios(credentials) {
   }
 }
 
-//resend verification email 
+//resend verification email
 export async function resendVerificationEmail(email) {
   try {
-    const response = await api.post("/auth/resend-email", { 
+    const response = await api.post("/auth/resend-email", {
       email: email,
     });
     // console.log("resend-mail data: ", response.data);
@@ -67,7 +67,7 @@ export async function forgotPassword(email) {
 // RESET PASSWORD
 export async function resetPassword(token, newPassword) {
   try {
-    
+
     const response = await api.post("/auth/reset-password", {
       token,
       newPassword
@@ -83,7 +83,7 @@ export async function resetPassword(token, newPassword) {
 // SERVER FETCH CURRENT USER (SERVER COMPONENT)
 
 
-// Update profile avatar
+// UPDATE PROFILE AVATAR
 export async function updateAvatar(formData) {
   try {
 
@@ -92,7 +92,7 @@ export async function updateAvatar(formData) {
         "Content-Type": "multipart/form-data",
       },
     });
-    
+
     return response.data;
 
   } catch (error) {
@@ -100,8 +100,7 @@ export async function updateAvatar(formData) {
   }
 }
 
-// Update profile
-
+// UPDATE PROFILE
 export async function updateProfile({ username, bio }) {
   try {
 
@@ -111,6 +110,21 @@ export async function updateProfile({ username, bio }) {
     })
 
     return response.data;
+
+  } catch (error) {
+    throw error;
+  }
+}
+
+// SEARCH FOR USER IN CONVERSATIONS
+export async function searchUser(query) {
+  try {
+
+    const response = await api.get("/user/search", {
+      params: { query },
+    }); // this will build /user/search?query=jaimatadi
+    // console.log("Data from user search: ", response.data);
+    return response.data; // pass data not full axios response 
 
   } catch (error) {
     throw error;
