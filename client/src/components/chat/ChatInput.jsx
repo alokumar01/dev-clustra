@@ -8,9 +8,9 @@ export default function ChatInput({ content, setContent, onSend }) {
   return (
     <div className="border-t border-border/70 bg-background/90 px-3 py-3 shadow-sm backdrop-blur-xl sm:px-4">
       <div className="flex w-full items-center gap-2 rounded-2xl border border-border bg-secondary/35 p-2">
-        <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Emoji">
+        {/* <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Emoji">
           <Smile className="size-[18px]" />
-        </Button>
+        </Button> */}
         <Input
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -18,9 +18,9 @@ export default function ChatInput({ content, setContent, onSend }) {
           className="h-11 flex-1 border-transparent bg-background shadow-sm focus-visible:border-ring"
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && onSend()}
         />
-        <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Attach file">
+        {/* <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Attach file">
           <Paperclip className="size-[18px]" />
-        </Button>
+        </Button> */}
         <Button
           onClick={onSend}
           disabled={!canSend}

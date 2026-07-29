@@ -1,4 +1,4 @@
-// TEST WORKING WITH SERVER COMPONENT 
+// TEST WORKING WITH SERVER COMPONENT
 // Current mindset:
 
 // Profile Page
@@ -46,7 +46,7 @@
 //       <div className='border shadow-2xl w-1/2 rounded-sm p-4 m-4'>
 //         <div className='flex gap-4'>
 //           <div>
-//             <Image 
+//             <Image
 //               src={data.user.avatar}
 //               alt='profile_image'
 //               width={60}
@@ -65,9 +65,9 @@
 
 //       <div className='border shadow-2xl w-1/2 rounded-sm p-4 m-4'>
 //         <h1 className='text-2xl m-4'>Personal Information</h1>
-        
 
-          
+
+
 
 //       </div>
 
@@ -79,11 +79,11 @@
 
 
 //     </Card>
-//   ) 
+//   )
 // }
 
 
-import getCurrentuser from "../services/auth.service.server"
+import getCurrentuser from "../services/auth.service.server_old"
 
 export default async function ProfilePage() {
   const user = await getCurrentuser();
