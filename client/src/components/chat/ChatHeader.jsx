@@ -13,10 +13,10 @@ export default function ChatHeader({ selectedChat, isOnline, onBack }) {
           <Avatar className="size-10">
             <AvatarImage src={selectedChat?.chatWith?.avatar} />
             <AvatarFallback>{selectedChat?.chatWith?.username?.[0] || 'U'}</AvatarFallback>
-            <AvatarBadge className={isOnline ? 'bg-[var(--online)]' : 'bg-muted-foreground'} />
+            <AvatarBadge className={isOnline ? 'bg-(--online)' : 'bg-muted-foreground'} />
           </Avatar>
           <div className="min-w-0">
-            <h2 className="truncate font-semibold">{selectedChat?.chatWith?.username || 'Unknown'}</h2>
+            <h2 className="truncate font-semibold">@{selectedChat?.chatWith?.username || 'Unknown'}</h2>
             <p className="text-sm text-muted-foreground">{isOnline ? 'Online' : 'Offline'}</p>
           </div>
         </div>

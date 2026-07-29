@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Boxes, CheckCircle2, CircleUserRoundIcon, MessageSquare, Moon, PhoneCallIcon, Settings2, Sparkles, Sun, UserRoundPlusIcon, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import SearchResults from '@/components/chat/SearchConversation'
 
 const mobileNavItems = [
     { id: 'messages', icon: MessageSquare, label: 'Chats' },
@@ -177,6 +178,8 @@ function WelcomePanel({ greeting, displayName, conversations, unreadCount, isDar
                 <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
                     Select a conversation to continue messaging, review unread updates, or switch your workspace theme.
                 </p>
+
+                {/* <SearchResults /> */}
 
                 {/* <div className="mt-8 grid gap-3 sm:grid-cols-3">
                     <StatCard label="Conversations" value={conversations} />

@@ -3,66 +3,105 @@
 import { useAuthStore } from "@/store/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Check, CheckCheck } from "lucide-react";
+import { Bubble, BubbleContent } from "../ui/bubble";
+import { cn } from "@/lib/utils";
 
 export default function ChatBubble({ message, selectedChat }) {
   const user = useAuthStore((state) => state.user);
 
   const isMe = message.senderId === user?._id;
-  // const avatar = isMe ? user?.avatar : selectedChat?.chatWith?.avatar;
-  // const fallback = isMe ? user?.username?.[0] : selectedChat?.chatWith?.username?.[0];
-  // const name = isMe ? "You" : selectedChat?.chatWith?.username;
+  const senderName = selectedChat?.chatWith?.username || "Contact";
+  const time = formatMessageTime(message.createdAt);
+  const status = getMessageStatus(message);
 
   return (
-    <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
+    <div className={cn("flex w-full items-end gap-2 px-1", isMe ? "justify-end" : "justify-start")}>
+      {!isMe && (
+        <Avatar className="mb-5 size-8">
+          <AvatarImage src={selectedChat?.chatWith?.avatar} alt={`${senderName} avatar`} />
+          <AvatarFallback className="text-xs">{getInitial(senderName)}</AvatarFallback>
+        </Avatar>
+      )}
+
       <div
-        className={`flex min-w-0 max-w-[88%] gap-2 sm:max-w-[72%] lg:max-w-[66%] ${
-          isMe ? "flex-row-reverse" : ""
-        }`}
+        className={cn(
+          "flex min-w-0 max-w-[86%] flex-col sm:max-w-[72%] lg:max-w-[64%]",
+          isMe ? "items-end" : "items-start"
+        )}
       >
-        {/* <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={avatar} alt="avatar" />
-          <AvatarFallback>{ "U"}</AvatarFallback>
-        </Avatar> */}
+        <Bubble
+          align={isMe ? "end" : "start"}
+          variant={isMe ? "default" : "outline"}
+          className="max-w-full"
+        >
+          <BubbleContent
+            className={cn(
+              "max-w-full rounded-2xl px-3.5 py-2.5 text-[0.95rem] leading-6 shadow-sm",
+              isMe
+                ? "rounded-br-md border-blue-600 bg-blue-600 text-white shadow-blue-600/10"
+                : "rounded-bl-md border-border bg-background text-foreground shadow-zinc-950/5 dark:bg-card"
+            )}
+          >
+            <p className="whitespace-pre-wrap wrap-break-word">{message.content}</p>
+          </BubbleContent>
+        </Bubble>
 
         <div
-          className={`min-w-0 rounded-2xl px-4 py-2 shadow-sm ${
-            isMe
-              ? "rounded-br-md bg-primary text-primary-foreground"
-              : "rounded-bl-md border border-border bg-background text-foreground"
-          }`}
+          className={cn(
+            "mt-1 flex h-4 items-center gap-1 text-[11px] leading-none text-muted-foreground",
+            isMe ? "justify-end pr-1" : "justify-start pl-1"
+          )}
         >
-          <p className="break-words text-sm leading-6">{message.content}</p>
+          <span>{time}</span>
 
-          <div
-            className={`flex items-center gap-1 mt-1 text-[11px] ${
-              isMe
-                ? "justify-end text-primary-foreground/80"
-                : "justify-end text-muted-foreground"
-            }`}
-          >
-            <span>
-              {new Date(message.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+          {isMe && (
+            <span
+              className={cn(
+                "inline-flex items-center",
+                status.type === "read" && "text-blue-600 dark:text-blue-400"
+              )}
+              title={status.label}
+              aria-label={status.label}
+            >
+              {status.type === "sent" ? (
+                <Check className="size-3.5" />
+              ) : (
+                <CheckCheck className="size-3.5" />
+              )}
             </span>
-
-            {isMe && (
-              <>
-                {/* READ */}
-                {message.readAt ? (
-                  <span className="text-primary-foreground"><CheckCheck size={14} /></span>
-                ) : message.deliveredAt ? (
-                  <span><CheckCheck size={14} /></span>
-                ) : (
-                  <span><Check size={14} /></span>
-                )}
-              </>
-            )}
-
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+function formatMessageTime(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+function getMessageStatus(message) {
+  if (message.readAt) {
+    return { type: "read", label: "Read" };
+  }
+
+  if (message.deliveredAt) {
+    return { type: "delivered", label: "Delivered" };
+  }
+
+  return { type: "sent", label: "Sent" };
+}
+
+function getInitial(name) {
+  return name?.trim()?.[0]?.toUpperCase() || "U";
 }
