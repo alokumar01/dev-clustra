@@ -1,10 +1,11 @@
 'use client'
 
+import { loginWithAxios } from "@/app/services/auth.service";
 import { api } from "@/lib/api/axios";
 import { toast } from "sonner";
 import { create } from "zustand";
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
     user: null,
     isAuthenticated: false,
     isLoading: false,
@@ -13,6 +14,13 @@ export const useAuthStore = create((set) => ({
         user,
         isAuthenticated: true
     }),
+
+    login: async (credentials) => {
+        const response = await loginWithAxios(credentials);
+        await get().getMe();
+
+        return response;
+    },
 
     getMe: async () => {
         try {

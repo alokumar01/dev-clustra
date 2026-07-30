@@ -18,9 +18,14 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { useSearchParams, usePathname } from "next/navigation";
+// import {  } from "next/navigation";
 
 export default function SignupPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    // const pathName = usePathname();
+
     const [formData, setFormData] = useState({
         username: "",
         email: "",
@@ -28,7 +33,6 @@ export default function SignupPage() {
     });
 
     const [loading, setLoading] = useState(false);
-    // const [error, setError] = useState("");
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -37,10 +41,6 @@ export default function SignupPage() {
             ...current,
             [name]: value,
         }));
-
-        // if (error) {
-        //   setError("");
-        // }
     }
 
     async function handleSubmit(event) {
@@ -51,8 +51,8 @@ export default function SignupPage() {
             const response = await signupWithAxios(formData);
 
             toast.success(response?.message || "Signup successful!");
-
             router.push("/login");
+            
         } catch (submitError) {
             toast.error(submitError.response?.data?.message || "Unable to create account.");
         } finally {

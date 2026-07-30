@@ -18,8 +18,8 @@ router.get("/logout", logoutController)
 router.post("/refresh", refreshAccessTokenController)
 router.patch("/update-profile", protect, limiter, updateProfileController);
 router.post("/change-password", protect, limiter, changePasswordController);
-router.post("/forgot-password", forgotPasswordController);
-router.post("/reset-password", resetPasswordController);
+router.post("/forgot-password", limiter, forgotPasswordController);
+router.post("/reset-password", limiter, resetPasswordController);
 
 export default router;
 
@@ -48,4 +48,4 @@ export default router;
 //  ↑
 // Error middleware (if error)
 
-// aisa flow mujche ache se batwo just 
+// aisa flow mujche ache se batwo just

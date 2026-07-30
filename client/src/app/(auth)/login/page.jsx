@@ -24,18 +24,21 @@ import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "@/store/authStore";
 import { useSearchParams } from "next/navigation";
+import { getPendingAction } from "@/lib/pendingAction";
+
+// test path name from login page if user comes from invite page already
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const [showVerifyUI, setShowVerifyUI] = useState(false);
-  const getMe = useAuthStore((store) => store.getMe);
+  // const getMe = useAuthStore((store) => store.getMe);
+  const login = useAuthStore((store) => store.login);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -51,17 +54,24 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await loginWithAxios(formData);
+      // const response = await loginWithAxios(formData);
+      const response = await login(formData);
       toast.success(response?.message);
-      await getMe();
+      // await getMe(); // after login it should check for pending action // RACE CONDITION getMe called twice
 
-      const redirect = searchParams.get("redirect");
+      const pendingAction = getPendingAction();
+      console.log("pending action in login page:", pendingAction);
 
-      router.push(redirect || "/chat");
+      if (pendingAction && pendingAction.type === "JOIN_INVITE") {
+        router.push(`/invite/${pendingAction.payload.token}`);
+        return;
+      } else {
+        const redirect = searchParams.get("redirect");
+        router.push(redirect || "/chat");
+      }
+
 
     } catch (submitError) {
-      // console.log(" full err: ", submitError)
-
       const data = submitError.response?.data;
 
       if (data?.code === "EMAIL_NOT_VERIFIED") {
