@@ -130,3 +130,18 @@ export async function searchUser(query) {
     throw error;
   }
 }
+
+// CHECK USERNAME AVAILABILITY
+export async function checkUsername(username) {
+  try {
+
+    const response = await api.get("/user/check-username", {
+      params: {username},
+    })
+
+    return response.data;
+
+  } catch (error) {
+    throw error;
+  }
+}
