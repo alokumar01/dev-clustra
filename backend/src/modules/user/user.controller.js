@@ -1,7 +1,7 @@
 import ApiError from "../../helpers/apiError.js";
 import User from "../user/user.model.js"
 import { v2 as cloudinary } from "cloudinary";
-import { searchUsersService } from "./user.service.js";
+import { searchUsersService, checkUsernameService } from "./user.service.js";
 
 export const updateAvatarController = async (req, res, next) => {
     try {
@@ -52,6 +52,25 @@ export const searchUsersController = async (req, res, next) => {
             message: "List of all data",
             data: users
         });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Check username availability
+
+export const checkUsernameController = async (req, res, next) => {
+    try {
+        const username = req.query.username;
+
+        const { available } = await checkUsernameService(username);
+
+        res.status(200).json({
+            success: true,
+            // message: "Username availabity check",
+            available
+        })
 
     } catch (error) {
         next(error);
