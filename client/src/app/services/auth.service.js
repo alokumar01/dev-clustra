@@ -3,7 +3,7 @@ import { api } from "@/lib/api/axios";
 export async function loginWithAxios(credentials) {
   try {
     const response = await api.post("/auth/login", credentials);
-    // console.log(response.data);
+    console.log("login data: ", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -124,7 +124,7 @@ export async function searchUser(query) {
       params: { query },
     }); // this will build /user/search?query=jaimatadi
     // console.log("Data from user search: ", response.data);
-    return response.data; // pass data not full axios response 
+    return response.data; // pass data not full axios response
 
   } catch (error) {
     throw error;

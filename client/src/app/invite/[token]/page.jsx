@@ -9,6 +9,7 @@ import { acceptInvite, verifyInviteToken } from '@/app/services/invite.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
+import { savePendingAction, clearPendingAction, getPendingAction } from '@/lib/pendingAction';
 
 export default function InvitePage({ params }) {
     const { token } = use(params);
@@ -31,9 +32,16 @@ export default function InvitePage({ params }) {
 
         if (!isAuthenticated) {
             console.info('[invite] Redirecting unauthenticated user to sign in', { token, pathname });
-            sessionStorage.setItem('inviteToken', token);
+            // sessionStorage.setItem('inviteToken', token);
+            savePendingAction({
+                type: "JOIN_INVITE",
+                payload: {
+                    token,
+                }
+            })
             toast.info('Please sign in to continue.');
-            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            // router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            router.push("/login")
             return;
         }
 
@@ -42,6 +50,7 @@ export default function InvitePage({ params }) {
             console.info('[invite] Accepting invite request', { token });
             const response = await acceptInvite(token);
             const conversationId = response?.conversationId;
+            // clearPendingAction(); // remove the join state from session storage
 
             if (conversationId) {
                 console.info('[invite] Invite accepted successfully', { token, conversationId });
@@ -117,11 +126,18 @@ export default function InvitePage({ params }) {
     }, [pathname, token]);
 
     useEffect(() => {
-        const pendingToken = sessionStorage.getItem('inviteToken');
+        // const pendingToken = sessionStorage.getItem('inviteToken');
+        const pendingAction = getPendingAction();
 
-        if (pendingToken && pendingToken === token && isAuthenticated) {
+        if (
+            pendingAction &&
+            pendingAction.type === "JOIN_INVITE" &&
+            pendingAction.payload.token === token &&
+            isAuthenticated
+        ) {
             console.info('[invite] Session restored. Finishing invite acceptance', { token });
-            sessionStorage.removeItem('inviteToken');
+            // sessionStorage.removeItem('inviteToken');
+            clearPendingAction();
             toast.success('Welcome back! Completing your invitation...');
             handleAcceptInvite();
         }
