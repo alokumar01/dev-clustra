@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
 import { verifyVerificationEmail } from "@/app/services/auth.service";
 import { AuthShell } from "@/components/ui/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -27,9 +26,12 @@ export default function VerifyEmail() {
 
       try {
         setStatus("loading");
+
         const response = await verifyVerificationEmail(token);
+
         setStatus("success");
-        setMessage(response?.message || "Your email has been verified.");
+        setMessage(response?.data?.message || "Your email has been verified.");
+        toast.success(response?.data?.message || "Your email has been verified.")
       } catch (error) {
         const errorMessage =
           error.response?.data?.message ||
@@ -37,6 +39,7 @@ export default function VerifyEmail() {
 
         setStatus("error");
         setMessage(errorMessage);
+
         toast.error(errorMessage);
       }
     }
@@ -55,30 +58,13 @@ export default function VerifyEmail() {
       description={
         isSuccess
           ? "Your account is ready for login."
-          : "This page checks the verification token from your email link."
+          : isLoading
+            ? "we're verifying your email"
+            : "The verification link is invalid or has expired."
       }
       heroTitle="Email verification keeps the account flow explicit."
       heroDescription="The verification route reads the token from the URL, calls the backend verification API, and shows a clear result state."
-      highlights={[
-        {
-          icon: MailCheck,
-          title: "Verification email",
-          description:
-            "Signup sends a tokenized email link before login is allowed.",
-        },
-        {
-          icon: ShieldCheck,
-          title: "Backend validation",
-          description:
-            "The token is validated by the existing verification endpoint.",
-        },
-        {
-          icon: CheckCircle2,
-          title: "Clear next step",
-          description:
-            "Successful verification sends the user back to the login flow.",
-        },
-      ]}
+
       alternatePrompt="Already verified?"
       alternateHref="/login"
       alternateLabel="Sign in"

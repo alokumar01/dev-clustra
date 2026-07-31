@@ -1,12 +1,12 @@
 export function verifyEmailTemplate({ username, verifyUrl, type = "signup"}) {
-  
-  const introText = type === "signup" 
+
+  const introText = type === "signup"
     ? "Thanks for signing up for <strong>Dev Clustra</strong>. Please confirm your email address to complete your registration."
     : "We received a request for a new verification email link for your <strong>Dev Clustra</strong> account."
-    
+
   return `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-      
+
       <h2>Verify your email address</h2>
 
       <p>Hi <strong> ${username}</strong>,</p>
@@ -42,7 +42,7 @@ export function verifyEmailTemplate({ username, verifyUrl, type = "signup"}) {
       </p>
 
       <p style="margin-top: 32px;">
-        — The Dev Clustra Team<br />
+        — Dev Clustra Team<br />
         <span style="font-size: 14px; color: #666;">
           Need help? Contact us at
           <a href="mailto:support@mail.whoisalok.tech">support@mail.whoisalok.tech</a>
