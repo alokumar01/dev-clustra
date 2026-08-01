@@ -17,6 +17,20 @@ export const api = axios.create({
 let isRefreshing = false;
 let refreshQueue = [];
 
+const AUTH_REFRESH_URL = "/auth/refresh";
+const AUTH_NO_REFRESH_PATHS = [
+  "/auth/login",
+  "/auth/signup",
+  "/auth/resend-email",
+  "/auth/verify-email",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+];
+
+const shouldSkipRefresh = (url = "") =>
+  url.includes(AUTH_REFRESH_URL) ||
+  AUTH_NO_REFRESH_PATHS.some((path) => url.includes(path));
+
 // run queued requests
 const processQueue = (error) => {
   refreshQueue.forEach((promise) => {
@@ -36,6 +50,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || "";
 
     if (!error.response) {
       toast.error("Network error. Please check your connection.");
@@ -49,7 +64,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (originalRequest.url.includes("/auth/refresh")) {
+    if (shouldSkipRefresh(requestUrl)) {
       return Promise.reject(error);
     }
 

@@ -80,13 +80,11 @@ export default function ResetPassword() {
                 id="password"
                 autoComplete="new-password"
                 required
-                minLength={8}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter a new password"
                 inputClassName="h-11 rounded-xl bg-background"
               />
-              <FieldDescription>Use at least 8 characters.</FieldDescription>
             </Field>
 
             <Field data-invalid={passwordsDoNotMatch}>
@@ -95,7 +93,6 @@ export default function ResetPassword() {
                 id="confirm-password"
                 autoComplete="new-password"
                 required
-                minLength={8}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 placeholder="Re-enter the new password"

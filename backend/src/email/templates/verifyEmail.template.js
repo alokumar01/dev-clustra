@@ -45,7 +45,7 @@ export function verifyEmailTemplate({ username, verifyUrl, type = "signup"}) {
         — Dev Clustra Team<br />
         <span style="font-size: 14px; color: #666;">
           Need help? Contact us at
-          <a href="mailto:support@mail.whoisalok.tech">support@mail.whoisalok.tech</a>
+          <a href="mailto:support@mail.aalokkumar.dev">support@mail.aalokkumar.dev</a>
         </span>
       </p>
 

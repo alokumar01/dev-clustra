@@ -1,13 +1,13 @@
 export function resetPasswordEmailTemplate({ username, resetUrl }) {
   return `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto;">
-      
+
       <h2 style="color: #000;">Reset your password</h2>
 
       <p>Hi <strong>${username}</strong>,</p>
 
       <p>
-        We received a request to reset the password for your 
+        We received a request to reset the password for your
         <strong>Dev Clustra</strong> account.
       </p>
 
@@ -48,11 +48,11 @@ export function resetPasswordEmailTemplate({ username, resetUrl }) {
       <hr style="margin: 32px 0; border: none; border-top: 1px solid #eee;" />
 
       <p>
-        — The Dev Clustra Team<br />
+        — Dev Clustra Team<br />
         <span style="font-size: 14px; color: #666;">
           Need help? Contact us at
-          <a href="mailto:support@mail.whoisalok.tech" style="color: #000;">
-            support@mail.whoisalok.tech
+          <a href="mailto:support@mail.aalokkumar.dev" style="color: #000;">
+            support@mail.aalokkumar.dev
           </a>
         </span>
       </p>
