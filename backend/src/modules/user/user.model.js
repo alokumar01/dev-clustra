@@ -8,8 +8,8 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
-        minlength:5,
-        maxlength: 15,
+        minlength:3,
+        maxlength: 18,
     },
     email: {
         type: String,
@@ -22,13 +22,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    avatar: { 
-        type: String, 
-        default: "https://api.dicebear.com/9.x/glass/png" 
+    avatar: {
+        type: String,
+        default: "https://api.dicebear.com/9.x/glass/png"
     },
-    avatarPublicId: { 
-        type: String, 
-        default: null 
+    avatarPublicId: {
+        type: String,
+        default: null
     },
     bio: {
         type: String,
@@ -87,7 +87,7 @@ const userSchema = new mongoose.Schema({
     },
     lastUsernameChange: {
         type: Date,
-        default: Date.now // new user will wait for 14 days 
+        default: Date.now // new user will wait for 14 days
     }
 
 }, {timestamps: true});

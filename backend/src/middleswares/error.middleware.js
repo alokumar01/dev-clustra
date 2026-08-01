@@ -2,21 +2,24 @@ import ApiError from "../helpers/apiError.js";
 
 const errorMiddleware = (err, req, res, next) => {
   console.error("====== ERROR ======");
-  // console.error(err);
-  // console.error(err.stack);
+  console.error(err);
 
   if (err instanceof ApiError) {
-    return res.status(err.status).json({
+    const status = Number.isInteger(err.status) ? err.status : 500;
+
+    return res.status(status).json({
       success: false,
       message: err.message,
       code: err.code,
-      details: err.details,
+      errors: err.errors,
     });
   }
 
   return res.status(500).json({
     success: false,
     message: "Internal Server Error",
+    code: "INTERNAL_SERVER_ERROR",
+    errors: [],
   });
 };
 

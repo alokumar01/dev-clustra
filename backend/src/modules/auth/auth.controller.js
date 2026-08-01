@@ -1,11 +1,10 @@
-import { NODE_ENV } from "../../config/env.js";
 import ApiError from "../../helpers/apiError.js";
 import { resendVerificationEmailService, signupService, verifyEmailService, loginService, logoutService, refreshAccessTokenService, updateProfileService, changePasswordService, forgotPasswordService, resetPasswordService } from "./auth.service.js";
 import { cookieOptions } from "../../config/cors.js"
 
 export const signupController = async (req, res, next) => { // Controller ka kaam hai HTTP data extract karna
     try {
-        const {username, email, password}  = req.body;
+        const {username, email, password}  = req.validatedData;
 
         const user = await signupService({ username, email, password });
 
@@ -23,12 +22,12 @@ export const verifyEmailController = async (req, res, next) => {
     try {
         const { token } = req.query;
 
-        if (!token) {
-            return res.status(400).json({
-                success: false,
-                message: "Verification token is required"
-            });
-        }
+        // if (!token) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "Verification token is required"
+        //     });
+        // }
 
         await verifyEmailService({ token });
         // const {username, email, isEmailVerified} = result.user;
@@ -46,11 +45,11 @@ export const verifyEmailController = async (req, res, next) => {
 //Resend Verification mail to user
 export const resendVerificationEmailController = async (req, res, next) => {
     try {
-        const { email } = req.body;
+        const { email } = req.validatedData;
 
-        if (!email) {
-            throw new ApiError(400, "Email id is required", "EMAIL_REQUIRED")
-        }
+        // if (!email) {
+        //     throw new ApiError(400, "Email id is required", "EMAIL_REQUIRED")
+        // }
 
         await resendVerificationEmailService({ email })
 
@@ -67,11 +66,7 @@ export const resendVerificationEmailController = async (req, res, next) => {
 //login controller
 export const loginController = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-
-        if (!email || !password) {
-            throw new ApiError(400, "Email and Password are required");
-        }
+        const { email, password } = req.validatedData;
 
         const { wasSuspended, accessToken, refreshToken } = await loginService({ email, password });
 
@@ -140,16 +135,9 @@ export const refreshAccessTokenController = async (req, res, next) => {
         //calling the services
         const {accessToken, refreshToken } = await refreshAccessTokenService({ oldRfToken });
 
-        const cookieOption = {
-            httpOnly: true,
-            secure: NODE_ENV === "production",
-            sameSite: NODE_ENV === "production" ? "none" : "lax",
-            domain: NODE_ENV === "production" ? ".aalokkumar.dev" : undefined,
-        };
-
         //setting tokens to browser
-        res.cookie("accessToken", accessToken, { ...cookieOption, maxAge:  15 * 60 * 1000 });
-        res.cookie("refreshToken", refreshToken, {...cookieOption, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge:  15 * 60 * 1000 });
+        res.cookie("refreshToken", refreshToken, {...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
         res.status(200).json({
             success: true,
@@ -163,7 +151,7 @@ export const refreshAccessTokenController = async (req, res, next) => {
 
 export const updateProfileController = async (req, res, next) => {
     try {
-        const { username, bio } = req.body;
+        const { username, bio } = req.validatedData;
 
         const updatedUser = await updateProfileService({
             userId: req.user._id,
@@ -185,7 +173,7 @@ export const updateProfileController = async (req, res, next) => {
 // change password contoller, when logged in
 export const changePasswordController = async(req, res, next) => {
     try {
-        const { oldPassword, newPassword } = req.body;
+        const { oldPassword, newPassword } = req.validatedData;
 
         await changePasswordService({
             userId: req.user._id,
@@ -206,11 +194,11 @@ export const changePasswordController = async(req, res, next) => {
 //forget password, when not logged in or user forgot the password, in two steps
 export const forgotPasswordController = async (req, res, next) => {
     try {
-        const { email } = req.body;
+        const { email } = req.validatedData;
 
-        if (!email) {
-            throw new ApiError(400, "Email Id is required", "EMAIL_REQUIRED");
-        }
+        // if (!email) {
+        //     throw new ApiError(400, "Email Id is required", "EMAIL_REQUIRED");
+        // }
 
         await forgotPasswordService({ email });
 
@@ -229,15 +217,15 @@ export const resetPasswordController = async (req, res, next) => {
     try {
         // const { token } = req.query;
         // const { newPassword } = req.body; // we have to chagne this
-        const { token, newPassword } = req.body;
+        const { token, newPassword } = req.validatedData;
 
-        if (!token) {
-            throw new ApiError(400, "Token not found", "RESET_TOKEN_NOT_FOUND");
-        }
+        // if (!token) {
+        //     throw new ApiError(400, "Token not found", "RESET_TOKEN_NOT_FOUND");
+        // }
 
-        if (!newPassword) {
-            throw new ApiError(400, "New password is required", "PASSWORD_REQUIRED");
-        }
+        // if (!newPassword) {
+        //     throw new ApiError(400, "New password is required", "PASSWORD_REQUIRED");
+        // }
 
         await resetPasswordService({ token, newPassword });
 

@@ -23,12 +23,7 @@ import { useDebounce } from "@/lib/useDebounce";
 export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const [formData, setFormData] = useState({
-        username: "",
-        email: "",
-        password: "",
-    });
-
+    const [formData, setFormData] = useState({ username: "", email: "", password: "",});
     const [usernameStatus, setUsernameStatus] = useState("idle");
     const [userAvailable, setUserAvailable] = useState(null);
     const latestUsername = useRef("");
@@ -55,6 +50,13 @@ export default function SignupPage() {
         if (!debouncedSearch.trim()) {
             setUserAvailable(null);
             setUsernameStatus("idle");
+            return;
+        }
+
+        // if length of username is less than 3 then return
+        if (debouncedSearch.trim().length < 3) {
+            setUserAvailable(null);
+            setUsernameStatus("validation");
             return;
         }
 
@@ -89,14 +91,14 @@ export default function SignupPage() {
 
     const usernameFeedback = {
         checking: "Checking username...",
+        validation: "Username must be between 3 and 18 characters.",
         available: "Username is available.",
         unavailable: "Username already exists.",
         error: "Could not check username right now.",
     }[usernameStatus];
 
     const isUsernameInvalid = usernameStatus === "unavailable";
-    const disableSubmit = loading || usernameStatus === "checking" || userAvailable === false;
-
+    const disableSubmit = loading || usernameStatus === "checking" || usernameStatus === "validation" || userAvailable === false;
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -158,9 +160,10 @@ export default function SignupPage() {
                                 className={
                                     usernameStatus === "available"
                                         ? "text-green-600"
-                                        : usernameStatus === "unavailable" || usernameStatus === "error"
-                                            ? "text-destructive"
-                                            : ""
+                                        : usernameStatus === "validation" ||
+                                            usernameStatus === "unavailable" ||
+                                            usernameStatus === "error" ? "text-destructive"
+                                        : ""
                                 }
                             >
                                 {usernameFeedback || "This name appears in conversations and invite flows."}
@@ -176,7 +179,6 @@ export default function SignupPage() {
                                 name="email"
                                 type="email"
                                 autoComplete="email"
-                                required
                                 value={formData.email}
                                 onChange={handleChange}
                                 placeholder="you@example.com"
@@ -191,15 +193,11 @@ export default function SignupPage() {
                                 name="password"
                                 autoComplete="new-password"
                                 required
-                                minLength={8}
                                 value={formData.password}
                                 onChange={handleChange}
                                 placeholder="Create a strong password"
                                 inputClassName="h-11 rounded-xl bg-background"
                             />
-                            <FieldDescription>
-                                Use at least 8 characters.
-                            </FieldDescription>
                         </Field>
                     </FieldGroup>
                 </FieldSet>
