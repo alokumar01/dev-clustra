@@ -62,7 +62,7 @@ export const searchUsersController = async (req, res, next) => {
 
 export const checkUsernameController = async (req, res, next) => {
     try {
-        const username = req.query.username;
+        const { username } = req.validatedData.username;
 
         const { available } = await checkUsernameService(username);
 

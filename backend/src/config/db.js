@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import { 
-  MONGO_URI, 
-  MONGODB_POOLSIZE, 
-  MONGODB_CONNECT_TIMEOUT 
+import {
+  MONGO_URI,
+  MONGODB_POOLSIZE,
+  MONGODB_CONNECT_TIMEOUT
 } from "./env.js"
 
 export async function connectDB() {
@@ -12,7 +12,7 @@ export async function connectDB() {
       connectTimeoutMS: MONGODB_CONNECT_TIMEOUT,
       socketTimeoutMS: 45000,
       ssl: true,
-      w: "majority",
+      writeConcern: "majority",
     });
 
     console.log("MongoDB connected successfully");

@@ -114,7 +114,7 @@ export const loginService = async({ email, password }) => {
 
     //User exist or not
     if(!user) {
-        throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+        throw new ApiError(401, "Invalid email or password entered", "INVALID_CREDENTIALS");
     }
 
     //checking user email is verified or not
@@ -153,7 +153,7 @@ export const loginService = async({ email, password }) => {
     const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordCorrect){
-        throw new ApiError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+        throw new ApiError(401, "Invalid email or password entered", "INVALID_CREDENTIALS");
     }
 
     //generate tokens
@@ -220,34 +220,6 @@ export const refreshAccessTokenService = async({ oldRfToken }) => {
     return { accessToken, refreshToken };
 }
 
-// export const refreshAccessTokenService = async ({ oldRfToken }) => {
-//     console.log("Cookie token:", oldRfToken);
-
-//     let decode;
-
-//     try {
-//         decode = jwt.verify(oldRfToken, JWT_REFRESH_SECRET);
-//         console.log("Decoded:", decode);
-//     } catch (err) {
-//         console.log("JWT Verify Error:", err.name, err.message);
-//         throw err;
-//     }
-
-//     const user = await User.findOne({
-//         _id: decode.sub,
-//         "refreshToken.token": oldRfToken,
-//     });
-
-//     console.log("User found:", !!user);
-
-//     if (!user) {
-//         throw new ApiError(
-//             401,
-//             "Invalid refresh token",
-//             "INVALID_REFRESH_TOKEN"
-//         );
-//     }
-// }
 
 //updat profile service
 export const updateProfileService = async({ userId, newUsername, newBio }) => {

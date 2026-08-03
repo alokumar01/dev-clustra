@@ -16,7 +16,7 @@ export const generateInviteService = async({ userId }) => {
 
     const threeDaysExpire = Date.now() + 72 * 60 * 60 * 1000;
 
-    const invite = await Invite.create({
+    await Invite.create({
         token: hash,
         inviterId: userId,
         expiredAt: threeDaysExpire,
