@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 export const getAllConversationService = async(userId) => {
     // step 1
     if (!userId) {
-        throw new ApiError("");
+        throw new ApiError(400, "User id is required", "USER_ID_REQUIRED");
     }
 
     //step 2; conversatoin me scan karo aur check karo ki kaha par user(logged in) hai

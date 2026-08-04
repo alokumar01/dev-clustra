@@ -7,7 +7,7 @@ import { getIO, getUserSocket } from "../../socket.server.js";
 
 export const sendMessageService = async(senderId, receiverId, content, type) => {
     if (!content) {
-        throw new ApiError("Message is required", 400);
+        throw new ApiError(400, "Message is required", "MESSAGE_REQUIRED");
     }
 
     //allowing self chat
@@ -31,7 +31,7 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
         const receiver = await User.findById(receiverId);
 
         if (!receiver) {
-            throw new ApiError("Receiver is not found", 400);
+            throw new ApiError(400, "Receiver is not found", "RECEIVER_NOT_FOUND");
         }
 
         conversation = await Conversation.findOne({
@@ -102,4 +102,3 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
 
     return { message, conversation };
 }
-

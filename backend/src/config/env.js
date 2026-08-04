@@ -3,7 +3,11 @@ dotenv.config();
 
 // Extract Cloudinary configuration from the URL
 function extractCloudinaryConfig() {
-    const cloudinaryUrl = process.env.CLOUDINARY_URL || "cloudinary://643326862345851:TQ0X5mRe9ut8rgNTByM2jmhhIYA@ddk9qhmit";
+    const cloudinaryUrl = process.env.CLOUDINARY_URL;
+    if (!cloudinaryUrl) {
+        throw new Error('CLOUDINARY_URL environment variable is required');
+    }
+
     const regex = /^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/;
     const match = cloudinaryUrl.match(regex);
     if (!match) {
