@@ -168,6 +168,47 @@ export const useChatStore = create((set, get) => ({
 
       return { conversations: updatedConversations };
     }),
+
+    // Set typing status for a conversation
+  // setTypingStatus: (conversationId, isTyping) =>
+  //   set((state) => {
+  //     const updatedConversation = state.conversations.map((conversation) =>
+  //       conversation._id === conversationId
+  //         ? { ...conversation, isTyping }
+  //         : conversation
+  //     );
+  //     return { conversations: updatedConversation };
+  //   })
+
+  typingUsers: new Map(),
+
+  setTypingUser: (conversationId, userId) => {
+    if (!conversationId || !userId) return;
+
+    set((state) => {
+      const typingUsers = new Map(state.typingUsers);
+      typingUsers.set(conversationId.toString(), userId.toString());
+
+      return { typingUsers };
+    });
+  },
+
+  clearTypingUser: (conversationId) => {
+    if (!conversationId) return;
+
+    set((state) => {
+      const typingUsers = new Map(state.typingUsers);
+      typingUsers.delete(conversationId.toString());
+      
+      return { typingUsers };
+    });
+  },
+
+
+
+
+
+
 }));
 
 

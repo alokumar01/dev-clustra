@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 
 export default function ChatBubble({ message, selectedChat }) {
   const user = useAuthStore((state) => state.user);
-
   const isMe = message.senderId === user?._id;
   const senderName = selectedChat?.chatWith?.username || "Contact";
   const time = formatMessageTime(message.createdAt);

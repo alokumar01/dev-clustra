@@ -1,7 +1,11 @@
 // src/components/chat/ChatMessages.jsx
 
+import { useChatStore } from "@/store/chatStore";
+
 import { useEffect, useRef } from "react";
 import ChatBubble from "../MessageBubble/ChatBubble";
+import TypingIndicator from "../MessageBubble/TypingIndicator";
+import { Avatar, AvatarImage } from "../ui/avatar";
 
 // abhi ye component sirf messages ko render karta hai
 // scroll ko manage karta hai
@@ -15,6 +19,10 @@ export default function ChatMessages({
   hasMore
 }) {
   const containerRef = useRef(null);
+  const conversationId = selectedChat?._id?.toString();
+  const chatWithId = selectedChat?.chatWith?._id?.toString();
+  const typingUserId = useChatStore((state) => state.typingUsers.get(conversationId));
+  const isTyping = Boolean(typingUserId && typingUserId === chatWithId);
   // user niche hai ya old messages padh raha hai
   const isUserScrolledUp = useRef(false);
   // pagination ke pehle current scrollHeight store karenge
@@ -92,7 +100,7 @@ export default function ChatMessages({
         behavior: "smooth",
       });
     }
-  }, [messages.length, selectedChat?._id]);
+  }, [messages.length, selectedChat?._id, isTyping]);
 
   // pagination ke baad wahi position restore karo
   useEffect(() => {
@@ -136,6 +144,22 @@ export default function ChatMessages({
             selectedChat={selectedChat}
           />
         ))}
+
+        <div>
+          {isTyping && (
+            <>
+              <Avatar className="mb-1.5 size-8 gap-2">
+                <AvatarImage src={selectedChat?.chatWith?.avatar} alt={`${selectedChat?.chatWith?.username} avatar`} />
+                <TypingIndicator />
+              </Avatar>
+              <p className="italic pl-10">{selectedChat?.chatWith?.username} is typing...</p>
+            </>
+          )}
+        </div>
+
+
+
+
       </div>
     </div>
   );
