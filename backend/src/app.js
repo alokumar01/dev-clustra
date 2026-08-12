@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-
 import { corsOptions } from "./config/cors.js";
 import v1Routes from "./routes/v1.routes.js";
 import errorMiddleware from "./middleswares/error.middleware.js"
