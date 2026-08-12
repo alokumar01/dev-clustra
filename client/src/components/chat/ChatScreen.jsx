@@ -10,7 +10,6 @@ import { useChatStore } from "@/store/chatStore"
 import { socket } from "@/store/socketStore"
 
 
-
 export default function ChatScreen({ selectedChat, onBack }) {
   const user = useAuthStore((state) => state.user);
   // console.log("user from chat screen:", user)
@@ -190,7 +189,7 @@ export default function ChatScreen({ selectedChat, onBack }) {
           hasMore={hasMore}
         />
       {/* </ScrollArea> */}
-      <ChatInput content={content} setContent={setContent} onSend={OnClick} />
+      <ChatInput content={content} setContent={setContent} onSend={OnClick} conversationId={conversationId} />
     </div>
   )
 }

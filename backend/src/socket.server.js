@@ -26,14 +26,14 @@ export const initSocket = (server) => {
             const cookies = socket.handshake.headers.cookie
              // we can use cookie later
             if (!cookies) {
-                throw ApiError(401, "Cookies not found", "COOKIES_REQUIRED")
+                throw new ApiError(401, "Cookies not found", "COOKIES_REQUIRED")
             }
 
             const parsed =  cookie.parse(cookies)
             const token = parsed.accessToken ;
 
             if (!token) {
-                throw ApiError(401, "Token not found", "TOKEN_REQUIRED")
+                throw new ApiError(401, "Token not found", "TOKEN_REQUIRED")
             }
 
             const decode = jwt.verify(token, JWT_SECRET);
@@ -80,6 +80,7 @@ export const initSocket = (server) => {
             console.log(`User ${userId} joined chat ${conversationId}`);
         });
 
+
         // leave conversation
         socket.on("leave_conversation", (conversationId) => {
             socket.leave(`chat:${conversationId}`);
@@ -87,6 +88,21 @@ export const initSocket = (server) => {
             if (socket.activeConversation === conversationId) {
                 socket.activeConversation = null;
             }
+        });
+
+        // Typing indicator
+        socket.on("typing:start", (conversationId) => {
+            socket.to(`chat:${conversationId}`).emit("typing:start", {
+                conversationId,
+                userId
+            });
+        });
+
+        socket.on("typing:stop", (conversationId) => {
+            socket.to(`chat:${conversationId}`).emit("typing:stop", {
+                conversationId,
+                userId
+            });
         });
 
         // disconnect
@@ -121,7 +137,7 @@ export const getUserSocket = (userId) => {
 //export io we can use in controller
 export const getIO = () => {
     if (!io) {
-        throw ApiError(401, "Socket.io not initialized");
+        throw new ApiError(500, "Socket.io not initialized", "SOCKET_NOT_INITIALIZED");
     }
 
     return io;

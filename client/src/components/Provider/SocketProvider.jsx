@@ -140,5 +140,32 @@ export default function SocketProvider({ children }) {
         }
     }, [user?._id]);
 
+
+
+    // Typing indicator management show user is typing or not 
+    useEffect(() => {
+        if (!user?._id) return;
+
+        const chatStore = useChatStore.getState();
+
+        const handleTypingStart = ({ conversationId, userId }) => {
+            if (userId?.toString() === user._id?.toString()) return;
+
+            chatStore.setTypingUser(conversationId, userId);
+        }
+
+        const handleTypingStop = ({ conversationId }) => {
+            chatStore.clearTypingUser(conversationId);
+        }
+
+        socket.on("typing:start", handleTypingStart);
+        socket.on("typing:stop", handleTypingStop);
+
+        return () => {
+            socket.off("typing:start", handleTypingStart);
+            socket.off("typing:stop", handleTypingStop);
+        }
+    }, [user?._id]);
+
     return children;
 }
