@@ -3,6 +3,7 @@ import { connectDB } from "./src/config/db.js";
 import { PORT } from "./src/config/env.js";
 import { createServer } from "http";
 import { initSocket } from "./src/socket.server.js";
+import { initSessionSocket } from "./src/modules/ehpemeralChat/session/session.socket.js";
 
 connectDB();
 
@@ -11,6 +12,7 @@ const server = createServer(app);
 
 // initialze the socket
 initSocket(server);
+initSessionSocket();
 
 // Start server
 server.listen(PORT, () => {
