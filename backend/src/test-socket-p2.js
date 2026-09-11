@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 
 const socket = io("http://localhost:5000/session", {
     auth: {
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTdiNjk5NzE5YTNkNzk5NWJiN2RkMWMiLCJzZXNzaW9uSWQiOiI2YTdiNjkzNGNjMzU5N2QyOTZhMTVlZGIiLCJyb2xlIjoiSE9TVCIsImlhdCI6MTc4NjQ3Mjg1NSwiZXhwIjoxNzg2NTU5MjU1fQ.DNSgToczl1RDF4ur5nGQUBFjFqzSMwtytFtZ-rmJHVY"
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTdiNmZjNzFhOTVlMTk3ZWUzZDAzMDAiLCJzZXNzaW9uSWQiOiI2YTdiNjkzNGNjMzU5N2QyOTZhMTVlZGIiLCJyb2xlIjoiUEFSVElDSVBBTlQiLCJpYXQiOjE3ODY0NzQ0MzksImV4cCI6MTc4NjU2MDgzOX0.LcottadbV39mty6W4j6wtlRJOUoyrbUZKIHjM0KpwLg"
     },
     reconnection: false
 });

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { customAlphabet, nanoid, urlAlphabet } from 'nanoid';
 
 export function generateEmailToken() {
   const emailToken = crypto.randomBytes(32).toString('hex');
@@ -57,4 +58,14 @@ export function hashInviteToken(inviteToken) {
     .createHash('sha256')
     .update(inviteToken)
     .digest('hex');
+}
+
+// CREATE EPHERMAL CHAT SESSION TOKEN
+const generateCode = customAlphabet(
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+    4
+);
+
+export function generateSessionCode() {
+  return generateCode();
 }

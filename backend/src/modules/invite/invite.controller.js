@@ -53,7 +53,7 @@ export const verifyInviteController = async (req, res, next) => {
         const { token } = req.params;
         // const userId = req.user._id;
         if (!token) {
-            throw new ApiError(400, "Invite token missng", "INVITE_TOKEN_MISSING")
+            throw new ApiError(400, "Invite token missing", "INVITE_TOKEN_MISSING")
         }
 
         const { user } = await verifyInviteService({ token });

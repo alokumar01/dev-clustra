@@ -17,5 +17,5 @@ test-socket.js
 testmail.js
 
 # docs
-docs/
-
+.vscode/
+test-mail.js

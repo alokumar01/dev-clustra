@@ -12,7 +12,7 @@ const onlineUser = new Map(); // userId => Set(socketIds)
 let io;
 //STEP 1. SOCKET KO INITILIZE KIYA
 export const initSocket = (server) => {
-    console.log("Socket Server Initialized...");
+    console.log("Global Socket Server Initialized...");
     io = new Server(server, {
         cors: {
             origin: FRONTEND_URL,
@@ -137,7 +137,7 @@ export const getUserSocket = (userId) => {
 //export io we can use in controller
 export const getIO = () => {
     if (!io) {
-        throw new ApiError(500, "Socket.io not initialized", "SOCKET_NOT_INITIALIZED");
+        throw new ApiError(500, "Global Socket.io not initialized", "GLOBAL_SOCKET_NOT_INITIALIZED");
     }
 
     return io;
