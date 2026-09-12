@@ -6,3 +6,8 @@ export const socket = io(SOCKET_URL, {
     autoConnect: false,
     withCredentials: true,
 });
+
+
+export const sessionSocket = io(`${SOCKET_URL}/session`, {
+    autoConnect: false,
+})

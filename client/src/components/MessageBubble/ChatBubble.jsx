@@ -5,12 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Check, CheckCheck } from "lucide-react";
 import { Bubble, BubbleContent } from "../ui/bubble";
 import { cn } from "@/lib/utils";
+import formatMessageTime from "@/lib/formatDate";
 
 export default function ChatBubble({ message, selectedChat }) {
   const user = useAuthStore((state) => state.user);
   const isMe = message.senderId === user?._id;
   const senderName = selectedChat?.chatWith?.username || "Contact";
-  const time = formatMessageTime(message.createdAt);
+  const time = formatMessageTime(message.createdAt, true);
   const status = getMessageStatus(message);
 
   return (
@@ -75,19 +76,19 @@ export default function ChatBubble({ message, selectedChat }) {
   );
 }
 
-function formatMessageTime(value) {
-  const date = new Date(value);
+// function formatMessageTime(value) {
+//   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
+//   if (Number.isNaN(date.getTime())) {
+//     return "";
+//   }
 
-  return date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true
-  });
-}
+//   return date.toLocaleTimeString([], {
+//     hour: "2-digit",
+//     minute: "2-digit",
+//     hour12: true
+//   });
+// }
 
 function getMessageStatus(message) {
   if (message.readAt) {

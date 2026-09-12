@@ -47,7 +47,7 @@ export default function InvitePage({ params }) {
 
         setIsAccepting(true);
         try {
-            console.info('[invite] Accepting invite request', { token });
+            // console.info('[invite] Accepting invite request', { token });
             const response = await acceptInvite(token);
             const conversationId = response?.conversationId;
             // clearPendingAction(); // remove the join state from session storage

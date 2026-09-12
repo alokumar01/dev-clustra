@@ -16,7 +16,7 @@ import ThemeProvider from "@/components/Provider/ThemeProvider";
 //   subsets: ["latin"],
 // });
 
-// ${geistSans.variable} ${geistMono.variable} 
+// ${geistSans.variable} ${geistMono.variable}
 
 export const metadata = {
   title: "DevClustra - Real Time Collaboration Tool",
@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <SocketProvider>
               {/* <Header /> */}
-                {children}
+              {children}
               {/* <Footer /> */}
 
             </SocketProvider>
