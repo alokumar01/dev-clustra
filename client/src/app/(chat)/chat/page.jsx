@@ -114,7 +114,7 @@ export default function ChatMain() {
 
             {/* when profile selected */}
             {activeIcon === 'profile' && (
-                <div className='min-w-0 flex-1 overflow-y-auto pb-[76px] md:pb-0'>
+                   <div className='min-w-0 flex-1 overflow-y-auto pb-19 md:pb-0'>
                     <ProfileView user={user}/>
                 </div>
             )}
@@ -154,7 +154,7 @@ export default function ChatMain() {
 
             {/* invite  */}
             {activeIcon === 'invite' && (
-                <div className='min-w-0 flex-1 overflow-y-auto pb-[76px] md:pb-0'>
+                <div className='min-w-0 flex-1 overflow-y-auto pb-19 md:pb-0'>
                     <InviteView />
                 </div>
             )}
@@ -213,7 +213,7 @@ function StatCard({ label, value }) {
 
 function PlaceholderPanel({ title, description, icon: Icon, action }) {
     return (
-        <section className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 pb-[92px] md:pb-6">
+        <section className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 pb-23 md:pb-6">
             <div className="w-full max-w-xl rounded-[2rem] border border-border bg-background/90 p-8 text-center shadow-sm">
                 <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-600">
                     <Icon className="size-6" />

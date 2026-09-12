@@ -12,6 +12,7 @@ const links = [
   { label: "Why", href: "#why" },
   { label: "Features", href: "#features" },
   { label: "Architecture", href: "#architecture" },
+  { label: "Temp Chat", href: "/session", external: true },
   // { label: "Stack", href: "#stack" },
   // { label: "GitHub", href: "https://github.com", external: true },
 ]
@@ -69,7 +70,7 @@ function MobileMenu({ open, onClose }) {
       />
       <aside
         className={cn(
-          "absolute right-0 top-0 h-full w-[360px] max-w-[84vw] border-l border-border bg-background p-6 shadow-2xl transition-transform duration-200",
+          "absolute right-0 top-0 h-full w-90 max-w-[84vw] border-l border-border bg-background p-6 shadow-2xl transition-transform duration-200",
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -131,7 +132,7 @@ export default function Header() {
     <header className="fixed inset-x-0 top-0 z-40">
       <nav
         className={cn(
-          "mx-auto mt-4 flex h-[64px] max-w-7xl items-center justify-between rounded-2xl border border-border/80 bg-background/80 px-4 shadow-sm backdrop-blur-xl transition-all duration-200 lg:px-6",
+          "mx-auto mt-4 flex h-16 max-w-7xl items-center justify-between rounded-2xl border border-border/80 bg-background/80 px-4 shadow-sm backdrop-blur-xl transition-all duration-200 lg:px-6",
           scrolled && "max-w-6xl bg-background/90"
         )}
         aria-label="Primary navigation"

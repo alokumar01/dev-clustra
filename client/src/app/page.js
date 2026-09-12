@@ -7,6 +7,7 @@ import Journey from "@/components/pages/Journey";
 import TechStack from "@/components/pages/TechStack";
 import Highlights from "@/components/pages/Highlights";
 import Footer from "@/components/pages/Footer";
+import SessionShell from "./(temp-chat)/session/components/SessionShell";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
       <TechStack />
       <Highlights />
       <Footer />
+      {/* <SessionShell /> */}
     </main>
   );
 }

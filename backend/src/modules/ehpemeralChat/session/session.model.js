@@ -7,7 +7,7 @@ const sessionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['ACTIVE', 'CLOSED'],
+        enum: ['ACTIVE', 'CLOSED', 'EXPIRED'],
         default: 'ACTIVE',
     },
     expiresAt: {
