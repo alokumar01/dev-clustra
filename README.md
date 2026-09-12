@@ -104,10 +104,10 @@ Core architecture layers include:
 - Docker Compose
 - Docker Hub
 - Jenkins
-- AWS EC2 (planned)
-- Kubernetes (planned)
-- Terraform (planned)
-- Prometheus & Grafana (planned)
+- AWS EC2
+- Kubernetes
+- Terraform
+- Prometheus & Grafana
 
 ---
 
