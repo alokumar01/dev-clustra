@@ -52,6 +52,15 @@ export function TempChatHeader({
             code: sessionCode
         }, (response) => {
             console.log("[SESSION CLOSE] ACK FROM SERVER: ", response);
+
+            if (!response?.success) {
+                toast.error(response?.message || "Unable to close the session.");
+                return;
+            }
+
+            toast.success(response.message || "Session closed successfully.");
+            clearPendingAction();
+            router.push("/session");
         })
     }
 

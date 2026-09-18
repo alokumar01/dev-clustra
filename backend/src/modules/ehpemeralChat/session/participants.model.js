@@ -33,7 +33,16 @@ const participantSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-participantSchema.index({ sessionId: 1 });
+// participantSchema.index({ sessionId: 1 });
 participantSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+participantSchema.index(
+    { sessionId: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            role: 'HOST'
+        }
+    }
+);
 
-export default mongoose.model('Participant', participantSchema);
+export default mongoose.models.Participant || mongoose.model('Participant', participantSchema);

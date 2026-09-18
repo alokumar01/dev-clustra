@@ -71,7 +71,7 @@ export default function SessionActions() {
     e.preventDefault()
     const normalizedCode = normalizeCode(code)
 
-    if (normalizedCode.length !== 6) {
+    if (normalizedCode.length !== 4) {
       setJoinState("invalid")
       return
     }

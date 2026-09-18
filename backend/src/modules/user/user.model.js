@@ -98,4 +98,4 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ accountStatus: 1 });
 userSchema.index({ emailVerifyHash: 1 });
 
-export default mongoose.model("User", userSchema);
+export default mongoose.models.User || mongoose.model("User", userSchema);

@@ -21,7 +21,7 @@ export function ShowParticipants({
             <SheetContent
                 side="right"
                 showCloseButton={false}
-                className="w-[380px] sm:w-[420px] p-0"
+                className="w-95 sm:w-105 p-0"
             >
                 {/* Header */}
                 <SheetHeader className="px-6 pt-6 pb-5">

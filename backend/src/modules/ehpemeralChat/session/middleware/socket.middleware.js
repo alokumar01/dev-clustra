@@ -68,6 +68,14 @@ export const sessionSocketAuth = async (socket, next) => {
     next();
 
   } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return next(new ApiError(401, "Session token expired", "SESSION_TOKEN_EXPIRED"));
+    }
+
+    if (error.name === "JsonWebTokenError") {
+      return next(new ApiError(401, "Invalid session token", "INVALID_SESSION_TOKEN"));
+    }
+
     next(error);
   }
 };

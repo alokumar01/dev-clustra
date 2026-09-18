@@ -22,12 +22,24 @@ export const generateRefreshToken = ( userId ) => {
 }
 
 // TEMP CHAT SESSION TOKEN
-export const generateSessionToken = (participantId, sessionId, role) => {
+export const generateSessionToken = (participantId, sessionId, role, sessionExpiresAt) => {
     const payload = {
         sub: participantId, sessionId, role
     }
 
+    const expiresAt = new Date(sessionExpiresAt).getTime();
+
+    if (Number.isNaN(expiresAt)) {
+        throw new Error("Invalid session expiry");
+    }
+
+    const expiresIn = Math.floor((expiresAt - Date.now()) / 1000);
+
+    if (expiresIn <= 0) {
+        throw new Error("Session has already expired");
+    }
+
     return jwt.sign(payload, JWT_SECRET, {
-        expiresIn: '24h'
-    })
+        expiresIn
+    });
 }

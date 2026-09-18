@@ -1,9 +1,11 @@
 //server engine (as io)
-import { Server } from "socket.io";
+import cookie from "cookie";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { Server } from "socket.io";
 import { FRONTEND_URL, JWT_SECRET } from "./config/env.js";
 import ApiError from "./helpers/apiError.js";
-import cookie from "cookie"
+import Conversation from "./modules/conversation/conversation.model.js";
 
 // userId = set(socketId);
 const onlineUser = new Map(); // userId => Set(socketIds)
@@ -45,6 +47,9 @@ export const initSocket = (server) => {
             next();
 
         } catch (error) {
+            if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
+                return next(new ApiError(401, "Invalid or expired token", "INVALID_TOKEN"));
+            }
             next(error)
         }
     })
@@ -73,32 +78,50 @@ export const initSocket = (server) => {
         socket.join(`user:${userId}`);
 
         // join conversation
-        socket.on("join_conversation", (conversationId) => {
+        const authorizeConversation = async (conversationId) => {
+            if (!mongoose.isValidObjectId(conversationId)) return false;
+            return Boolean(await Conversation.exists({
+                _id: conversationId,
+                participants: userId
+            }));
+        };
+
+        socket.on("join_conversation", async (conversationId, ack) => {
+            if (!(await authorizeConversation(conversationId))) {
+                return ack?.({ success: false, message: "Conversation access denied" });
+            }
             socket.join(`chat:${conversationId}`);
             socket.activeConversation = conversationId;
+            ack?.({ success: true });
 
             console.log(`User ${userId} joined chat ${conversationId}`);
         });
 
 
         // leave conversation
-        socket.on("leave_conversation", (conversationId) => {
+        socket.on("leave_conversation", async (conversationId, ack) => {
+            if (!(await authorizeConversation(conversationId))) {
+                return ack?.({ success: false, message: "Conversation access denied" });
+            }
             socket.leave(`chat:${conversationId}`);
 
             if (socket.activeConversation === conversationId) {
                 socket.activeConversation = null;
             }
+            ack?.({ success: true });
         });
 
         // Typing indicator
-        socket.on("typing:start", (conversationId) => {
+        socket.on("typing:start", async (conversationId) => {
+            if (!(await authorizeConversation(conversationId))) return;
             socket.to(`chat:${conversationId}`).emit("typing:start", {
                 conversationId,
                 userId
             });
         });
 
-        socket.on("typing:stop", (conversationId) => {
+        socket.on("typing:stop", async (conversationId) => {
+            if (!(await authorizeConversation(conversationId))) return;
             socket.to(`chat:${conversationId}`).emit("typing:stop", {
                 conversationId,
                 userId
