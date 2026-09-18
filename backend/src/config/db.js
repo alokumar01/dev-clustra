@@ -19,13 +19,6 @@ export async function connectDB() {
     console.log("DB Connected:", mongoose.connection.name);
   } catch (error) {
     console.error("MongoDB connection failed", error);
-    process.exit(1);
+    throw error;
   }
 }
-
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  await mongoose.connection.close();
-  console.log("MongoDB connection closed due to application termination");
-  process.exit(0);
-});

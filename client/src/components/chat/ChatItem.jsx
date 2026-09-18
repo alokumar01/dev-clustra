@@ -23,7 +23,7 @@ export default function ChatItem({ item, isActive, onClick }) {
         <AvatarFallback>{item.chatWith?.username?.[0] || 'U'}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium truncate">{item.chatWith?.username || 'Unknown'}</h4>
+        <h4 className="font-medium truncate">{item.chatWith?.username || 'Unknown C'}</h4>
         <p className={cn("truncate text-sm text-muted-foreground", isActive && "text-white/75")}>{item.lastMessage?.content || 'No messages yet'}</p>
       </div>
       <div className="flex flex-col items-end gap-1">

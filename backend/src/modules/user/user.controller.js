@@ -1,7 +1,7 @@
-import ApiError from "../../helpers/apiError.js";
-import User from "../user/user.model.js"
 import { v2 as cloudinary } from "cloudinary";
-import { searchUsersService, checkUsernameService } from "./user.service.js";
+import ApiError from "../../helpers/apiError.js";
+import User from "../user/user.model.js";
+import { checkUsernameService, searchUsersService } from "./user.service.js";
 
 export const updateAvatarController = async (req, res, next) => {
     try {
@@ -44,8 +44,11 @@ export const searchUsersController = async (req, res, next) => {
         if (!query) {
             return res.status(200).json({ success: true, data: [] });
         }
+        if (typeof query !== "string" || query.trim().length > 50) {
+            throw new ApiError(400, "Search query is invalid", "INVALID_SEARCH_QUERY");
+        }
 
-        const users = await searchUsersService(query, currentUser);
+        const users = await searchUsersService(query.trim(), currentUser);
 
         res.status(200).json({
             success: true,
@@ -62,7 +65,8 @@ export const searchUsersController = async (req, res, next) => {
 
 export const checkUsernameController = async (req, res, next) => {
     try {
-        const { username } = req.validatedData.username;
+        const { username } = req.validatedData;
+        console.log(username);
 
         const { available } = await checkUsernameService(username);
 

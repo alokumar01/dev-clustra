@@ -1,6 +1,6 @@
+import { cookieOptions } from "../../config/cors.js";
 import ApiError from "../../helpers/apiError.js";
-import { resendVerificationEmailService, signupService, verifyEmailService, loginService, logoutService, refreshAccessTokenService, updateProfileService, changePasswordService, forgotPasswordService, resetPasswordService } from "./auth.service.js";
-import { cookieOptions } from "../../config/cors.js"
+import { changePasswordService, forgotPasswordService, loginService, logoutService, refreshAccessTokenService, resendVerificationEmailService, resetPasswordService, signupService, updateProfileService, verifyEmailService } from "./auth.service.js";
 
 export const signupController = async (req, res, next) => { // Controller ka kaam hai HTTP data extract karna
     try {

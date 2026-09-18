@@ -1,7 +1,7 @@
-import jwt from "jsonwebtoken"
-import User from "../modules/user/user.model.js"
-import ApiError from "../helpers/apiError.js";
+import jwt from "jsonwebtoken";
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config/env.js";
+import ApiError from "../helpers/apiError.js";
+import User from "../modules/user/user.model.js";
 
 export const protect = async (req, res, next) => {
     try {
@@ -34,6 +34,9 @@ export const protect = async (req, res, next) => {
         // If JWT is expired or invalid, send a 401 instead of a 500
         if (error.name === "TokenExpiredError") {
             return next(new ApiError(401, "Token expired, please login again.", "TOKEN_EXPIRED"));
+        }
+        if (error.name === "JsonWebTokenError") {
+            return next(new ApiError(401, "Invalid token, please login again.", "INVALID_TOKEN"));
         }
         next(error);
     }

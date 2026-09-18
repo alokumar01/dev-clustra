@@ -1,9 +1,9 @@
-import ApiError from "../../helpers/apiError.js"
+import ApiError from "../../helpers/apiError.js";
 import { generateInviteToken, hashInviteToken } from "../../helpers/crypto.js";
-import Conversation from "../conversation/conversation.model.js";
-import User from "../user/user.model.js"
-import Invite from "./invite.model.js";
 import { getIO } from "../../socket.server.js";
+import Conversation from "../conversation/conversation.model.js";
+import User from "../user/user.model.js";
+import Invite from "./invite.model.js";
 
 // Generate invite token
 export const generateInviteService = async({ userId }) => {
@@ -64,54 +64,75 @@ export const acceptInviteService = async({ token, userId }) => {
     const hashedToken = hashInviteToken(token);
 
     // find the invite document with the token
-    const invite = await Invite.findOne({ // A user,
+    const invite = await Invite.findOneAndUpdate({
         token: hashedToken,
         inviteStatus: "pending"
-    })
+    }, {
+        $set: { inviteStatus: "accepted" }
+    }, { new: true });
 
     if (!invite) {
         throw new ApiError(404, "Invite message not found", "INVITE_MISSING")
     }
 
-    const inviter = invite.inviterId;
-
-    // check self joining
-    if (inviter.toString() === userId.toString())
-        throw new ApiError(400, "You cannot accept your own invite link")
+    const inviter = invite.inviterId; // find the user, who generate the invite link
+    // check self joining, self chat is allowed in message module and Its in MVP PLAN
 
     let conversation;
-    conversation = await Conversation.findOne({
-        participants: {
-            $all: [userId, inviter],
-        }
-    });
+    if (inviter.toString() === userId.toString()) {
 
-    // if conversation not found then we crete conversation with userId and inviter
-    if (!conversation) { // created one document of conversation
-        conversation = await Conversation.create({
-            participants: [userId, inviter],
-            lastMessage: null,
-            unreadCount: {
-                [userId]: 0,
-                [inviter]: 0
-            }
+        // create self chat conversation
+        conversation = await Conversation.findOne({
+            participants: {
+                $all: [userId],
+                $size: 1,
+            },
+            type: "private"
         });
+
+        if (!conversation) {
+            conversation = await Conversation.create({
+                participants: [inviter],
+                type: "private",
+                lastMessage: null,
+                unreadCount: {
+                    [userId]: 0
+                }
+            });
+        }
+
+    } else {
+        // 1 To 1 chat
+        conversation = await Conversation.findOne({
+            participants: {
+                $all: [userId, inviter],
+                $size: 2,
+            },
+            type: "private"
+        });
+
+        // if conversation not found then we crete conversation with userId and inviter
+        if (!conversation) { // created one document of conversation
+            conversation = await Conversation.create({
+                participants: [userId, inviter],
+                lastMessage: null,
+                unreadCount: {
+                    [userId]: 0,
+                    [inviter]: 0
+                }
+            });
+        }
     }
-
-
-    // update the data of invite status
-    invite.inviteStatus = "accepted";
-
-    await invite.save(); // single src of truth db
 
     // let change the expected with conversation services strcuture
     const conversationWithParticipants = await Conversation.findById(conversation._id)
         .populate("participants", "username avatar")
         .populate("lastMessage")
         .populate("lastMessage", "content messageType senderId")
+
         const otherUser = conversationWithParticipants.participants.find(
             user => user._id.toString() !== inviter.toString()
-        );
+        ) || conversationWithParticipants.participants[0];
 
         const conversationPayload = {
             _id: conversation._id,
@@ -128,7 +149,6 @@ export const acceptInviteService = async({ token, userId }) => {
 
         console.log("conversation payload: ",conversationPayload)
 
-    // socker event
     // Socker event for inviter, inform to inviter that someone accepte your invitation
     const io =  getIO(); // conversation here is the mongodb one document not matched with what frontend needs
     io.to(`user:${inviter.toString()}`).emit("conversation_created", conversationPayload);

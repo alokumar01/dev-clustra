@@ -85,11 +85,11 @@ pipeline {
                     }
                 }
 
-                stage('Build Frontend Image') {
-                    steps {
-                        sh "docker build -t ${FRONTEND_IMAGE} ./client"
-                    }
-                }
+                // stage('Build Frontend Image') {
+                //     steps {
+                //         sh "docker build -t ${FRONTEND_IMAGE} ./client"
+                //     }
+                // }
 
                 stage('Docker Login') {
                     steps {
@@ -115,11 +115,11 @@ pipeline {
                     }
                 }
 
-                stage('Push Frontend Image') {
-                    steps {
-                        sh "docker push ${FRONTEND_IMAGE}"
-                    }
-                }
+                // stage('Push Frontend Image') {
+                //     steps {
+                //         sh "docker push ${FRONTEND_IMAGE}"
+                //     }
+                // }
 
                 stage('Trigger CD') {
                     steps {

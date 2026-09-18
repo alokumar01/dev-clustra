@@ -1,19 +1,19 @@
-import ApiError from '../../../helpers/apiError.js'
+import ApiError from '../../../helpers/apiError.js';
 import { generateSessionCode } from "../../../helpers/crypto.js";
-import Session from './session.model.js';
-import Participant from './participants.model.js';
 import { generateSessionToken } from '../../../helpers/jwt.js';
+import Participant from './participants.model.js';
+import Session from './session.model.js';
 
 // CREATE SESSIION
 export const createSession = async () => {
     //get session code
     let sessionCode = generateSessionCode();
-    // let existingSession = await Session.findOne({ sessionCode });
+    let existingSession = await Session.findOne({ sessionCode })
 
-    // while(existingSession) {
-    //     sessionCode = generateSessionCode();
-    //     existingSession = await Session.findOne({ sessionCode });
-    // }
+    while(existingSession) {
+        sessionCode = generateSessionCode();
+        existingSession = await Session.findOne({ sessionCode })
+    }
 
     //create session in db
     const session = await Session.create({
@@ -65,14 +65,22 @@ export const joinSession = async (code, name) => {
 
     const assignRole = existingParticipant === 0 ? 'HOST' : 'PARTICIPANT';
 
-    const participant = await Participant.create({
-        sessionId: session._id,
-        displayName: name,
-        role: assignRole,
-        expiresAt: session.expiresAt
-    })
+    let participant;
+    try {
+        participant = await Participant.create({
+            sessionId: session._id,
+            displayName: name,
+            role: assignRole,
+            expiresAt: session.expiresAt
+        });
+    } catch (error) {
+        if (error.code === 11000) {
+            throw new ApiError(409, "Another participant joined first. Please try again.", "SESSION_JOIN_CONFLICT");
+        }
+        throw error;
+    }
 
-    const token = generateSessionToken(participant._id, session._id, assignRole);
+    const token = generateSessionToken(participant._id, session._id, assignRole, session.expiresAt);
 
     return { participant, token };
 }
@@ -95,11 +103,19 @@ export const closeSessionService = async (participantId, sessionId, role) => {
     if (!participant)
         throw new ApiError(400, "Participant not found.", "PARTICIPANT_NOT_FOUND.")
 
-    if (participant.role !== role) {
-        throw new ApiError(400, "Seesion only closed via host only.", "SESSION_CLOSED_ACCESS_DENIED");
+    if (role !== "HOST" || participant.role !== "HOST") {
+        throw new ApiError(403, "Only the host can close this session.", "SESSION_CLOSED_ACCESS_DENIED");
     }
 
+    const now = new Date();
     session.status = "CLOSED";
+    // if session closed request then set the current time at expiresAt, rather than storing and let TTL DELETE AFTER 24hrs
+    session.expiresAt = now
+
+    await Participant.updateMany(
+        { sessionId: sessionId },
+        { $set: { expiresAt: now } }
+    )
 
     await session.save();
 
@@ -107,6 +123,21 @@ export const closeSessionService = async (participantId, sessionId, role) => {
         success: true
     }
 };
+
+export const assertActiveSession = async (sessionId) => {
+    const session = await Session.findById(sessionId);
+
+    if (!session)
+        throw new ApiError(404, "Session does not exist", "SESSION_NOT_EXIST");
+
+    if (session.status === "CLOSED")
+        throw new ApiError(401, "Session is closed", "SESSION_CLOSED");
+
+    if (session.expiresAt <= new Date())
+        throw new ApiError(401, "Session has expired", "SESSION_EXPIRED");
+
+    return session;
+}
 
 // RETURN THE PARTICIANT DETAILS WHO JOINED THE EVENT -> FOR UPDATE IN CHAT AND IN PARTICIAPNT LIST AUTO
 export const newJoinParticipantService = async (participantId) => {
@@ -140,6 +171,12 @@ export const getAllParticipant = async (code, participantId) => {
 
     if (!session)
         throw new ApiError(404, "Session does not exist.", "SESSION_NOT_FOUND");
+
+    if (session.status !== "ACTIVE")
+        throw new ApiError(410, "Session is no longer active.", "SESSION_CLOSED");
+
+    if (session.expiresAt <= new Date())
+        throw new ApiError(410, "Session has expired.", "SESSION_EXPIRED");
 
     const participant = await Participant.findById(participantId);
 

@@ -1,4 +1,4 @@
-import  { z } from "zod"
+import { z } from "zod";
 
 // SIGNUP VALIDATION SCHEMA
 export const registerSchema = z.object({
@@ -57,8 +57,9 @@ export const updateProfileSchema = z.object({
             .max(160, {
                 message: "Bio cannot exceed 160 characters."
             })
-
-})
+}).partial().refine((data) => Object.keys(data).length > 0, {
+    message: "At least one profile field is required."
+});
 
 // CHANGE PASSWORD VALIDATION SCHEMA
 export const changePasswordSchema = z.object({

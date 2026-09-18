@@ -29,4 +29,4 @@ const conversationSchema = new mongoose.Schema ({
 
 conversationSchema.index({ participants: 1 }); // indexing for faster access 
 
-export default mongoose.model("Conversation", conversationSchema);
+export default mongoose.models.Conversation || mongoose.model("Conversation", conversationSchema);

@@ -1,8 +1,8 @@
 // GET CONVERSATION LIST
-import Conversation from "./conversation.model.js"
-import ApiError from "../../helpers/apiError.js";
-import Message from "../message/message.model.js"
 import mongoose from "mongoose";
+import ApiError from "../../helpers/apiError.js";
+import Message from "../message/message.model.js";
+import Conversation from "./conversation.model.js";
 
 //GET ALL CONVERSATION
 export const getAllConversationService = async(userId) => {
@@ -23,7 +23,7 @@ export const getAllConversationService = async(userId) => {
     const inbox = conversations.map((conversation) => {
         const otherUser = conversation.participants.find(
             (user) => user._id.toString() !== userId.toString()
-        );
+        ) || conversation.participants[0]
 
         return {
             _id: conversation._id,
@@ -46,6 +46,9 @@ export const getAllConversationService = async(userId) => {
 export const getConversationMessagesService = async(conversationId, userId, before, limit) => {
     if (!conversationId) {
         throw new ApiError(400, "Conversation is not found", "CONVERSATION_ID_REQUIRED");
+    }
+    if (!mongoose.isValidObjectId(conversationId)) {
+        throw new ApiError(400, "Invalid conversation id", "INVALID_CONVERSATION_ID");
     }
 
     const conversation = await Conversation.findById( conversationId )
@@ -98,6 +101,9 @@ export const getConversationMessagesService = async(conversationId, userId, befo
 export const readConversationMessagesService = async(conversationId, userId) => {
     if (!conversationId) {
         throw new ApiError(404, "Conversation is not found", "CONVERSATION_NOT_FOUND");
+    }
+    if (!mongoose.isValidObjectId(conversationId)) {
+        throw new ApiError(400, "Invalid conversation id", "INVALID_CONVERSATION_ID");
     }
 
     const conversation = await Conversation.findById(conversationId); // ye ek document lakar dega mujhe

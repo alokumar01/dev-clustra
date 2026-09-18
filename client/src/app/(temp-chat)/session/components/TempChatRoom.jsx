@@ -8,12 +8,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TempChatHeader } from "./TempChatHeader";
 import TempChatMessage from "./TempChatMessage";
-import { useRouter } from "next/navigation";
 import formatMessageTime from "@/lib/formatDate";
 
 
 export default function TempChatRoom({ sessionCode, user }) {
-  // console.log("FULL USER DETAILS IN TEMP CHAT ROOM: ", user);
+  console.log("FULL USER DETAILS IN TEMP CHAT ROOM: ", user);
   const [content, setContent] = useState("");
   const [messages, setMessages] = useState([]);
   const inputRef = useRef(null);
@@ -23,15 +22,17 @@ export default function TempChatRoom({ sessionCode, user }) {
     () => formatExpiry(user?.expiresAt),
     [user?.expiresAt],
   );
-  const router = useRouter();
   const [joinedNotices, setJoinedNotices] = useState([]);
   const [leaveNotices, setLeaveNotices] = useState([]);
 
 
   // PARTICIPANT JOINED THE SESSION
   useEffect(() => {
-    const handleParticipantJoined = ({ participantName, joinedAt }) => {
-      setJoinedNotices((current) => [...current, { participantName, joinedAt }]);
+    const handleParticipantJoined = ({ participant, joinedAt }) => {
+      setJoinedNotices((current) => [...current, {
+        displayName: participant?.displayName || "Guest",
+        joinedAt,
+      }]);
     };
 
     sessionSocket.on("session:participant-joined", handleParticipantJoined);
@@ -39,12 +40,15 @@ export default function TempChatRoom({ sessionCode, user }) {
     return () => {
       sessionSocket.off("session:participant-joined", handleParticipantJoined);
     }
-  })
+  }, [])
 
   // PARTICIAPNT LEFT SESSION,  SERVER -> CLIENT LISTEN
   useEffect(() => {
-    const handleParticipantLeft = ({ name, leftAt }) => {
-      setLeaveNotices((current) => [...current, { name, leftAt }]);
+    const handleParticipantLeft = ({ participant, leftAt }) => {
+      setLeaveNotices((current) => [...current, {
+        displayName: participant?.displayName || "Guest",
+        leftAt,
+      }]);
     };
 
     sessionSocket.on("session:participant-left", handleParticipantLeft);
@@ -62,10 +66,7 @@ export default function TempChatRoom({ sessionCode, user }) {
         ...current,
         {
           ...message,
-          displayName:
-            message.participantId === myParticipantId
-              ? participantName
-              : "Guest",
+          displayName: message.participantName,
           isMe: message.participantId === myParticipantId,
         },
       ]);
@@ -76,7 +77,7 @@ export default function TempChatRoom({ sessionCode, user }) {
     return () => {
       sessionSocket.off("message:new", handleNewMessage);
     };
-  }, [myParticipantId, participantName]);
+  }, [myParticipantId]);
 
   // SEND MESSAGE EVENT
   function handleSend(event) {
@@ -91,7 +92,7 @@ export default function TempChatRoom({ sessionCode, user }) {
         content: nextContent,
       },
       (response) => {
-        console.log("[MESSAGE SEND] ACK FROM SERVER :", response);
+        // console.log("[MESSAGE SEND] ACK FROM SERVER :", response);
       },
     );
     setContent("");
@@ -116,7 +117,7 @@ export default function TempChatRoom({ sessionCode, user }) {
             className="flex justify-center py-2"
           >
             <span className="text-xs text-zinc-400">
-              {notice.name} left the chat ·{" "}
+              {notice.displayName} left the chat ·{" "}
               { formatMessageTime(notice.leftAt, true) }
             </span>
           </div>
@@ -129,7 +130,7 @@ export default function TempChatRoom({ sessionCode, user }) {
             className="flex justify-center py-2"
           >
             <span>
-              {notice.name} joined the chat.
+              {notice.displayName} joined the chat ·{" "}
               { formatMessageTime(notice.joinedAt, true) }
             </span>
           </div>

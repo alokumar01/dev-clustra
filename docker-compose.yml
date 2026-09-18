@@ -1,13 +1,16 @@
 services:
     frontend:
-        image: aalokumar01/dev-clustra-frontend:latest
+        build:
+            context: ./client
         ports:
             - "3000:3000"
         env_file:
             - ./client/.env
 
     backend:
-        image: aalokumar01/dev-clustra-backend:latest
+        # image: aalokumar01/dev-clustra-backend:latest
+        build:
+            context: ./backend
         ports:
             - "5000:5000"
         env_file:

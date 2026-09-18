@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
-import User from "../user/user.model.js"
-import ApiError from "../../helpers/apiError.js";
-import { sendResetPasswordEmail, sendVerificationEmail } from "../../email/intents/sendVerificationEmail.js";
-import { generateEmailToken, generateForgotPasswordToken, hashResetToken, hashToken} from "../../helpers/crypto.js";
-import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import { JWT_REFRESH_SECRET } from "../../config/env.js";
+import { sendResetPasswordEmail, sendVerificationEmail } from "../../email/intents/sendVerificationEmail.js";
+import ApiError from "../../helpers/apiError.js";
+import { generateEmailToken, generateForgotPasswordToken, hashResetToken, hashToken } from "../../helpers/crypto.js";
+import { generateAccessToken, generateRefreshToken } from "../../helpers/jwt.js";
+import User from "../user/user.model.js";
 
 //// service, object receive karti hai, services db se talk karti hai, means business logic
 export const signupService = async({ username, email, password })  => {
@@ -182,7 +182,15 @@ export const logoutService = async({ refreshToken }) => {
 export const refreshAccessTokenService = async({ oldRfToken }) => {
     //verify the token, throws error if expired or anything else
     // console.log("cookies token:", oldRfToken)
-    const decode = jwt.verify(oldRfToken, JWT_REFRESH_SECRET)
+    let decode;
+    try {
+        decode = jwt.verify(oldRfToken, JWT_REFRESH_SECRET);
+    } catch (error) {
+        if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
+            throw new ApiError(401, "Invalid or expired refresh token", "INVALID_REFRESH_TOKEN");
+        }
+        throw error;
+    }
 
     // find the user and check the specfic token
     const user = await User.findOne({
