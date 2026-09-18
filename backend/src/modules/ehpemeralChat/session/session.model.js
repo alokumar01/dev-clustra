@@ -22,4 +22,4 @@ const sessionSchema = new mongoose.Schema({
 }, {timestamps: true} );
 
 sessionSchema.index({ sessionCode: 1 }, { unique: true });
-export default mongoose.model('Session', sessionSchema);
+export default mongoose.models.Session || mongoose.model('Session', sessionSchema);

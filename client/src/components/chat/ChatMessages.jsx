@@ -19,7 +19,7 @@ export default function ChatMessages({
   hasMore
 
 
-  
+
 }) {
   const containerRef = useRef(null);
   const conversationId = selectedChat?._id?.toString();
@@ -155,7 +155,7 @@ export default function ChatMessages({
                 <AvatarImage src={selectedChat?.chatWith?.avatar} alt={`${selectedChat?.chatWith?.username} avatar`} />
                 <TypingIndicator />
               </Avatar>
-              <p className="italic pl-10">{selectedChat?.chatWith?.username} is typing...</p>
+              {/* <p className="italic pl-10">{selectedChat?.chatWith?.username} is typing...</p> */}
             </>
           )}
         </div>

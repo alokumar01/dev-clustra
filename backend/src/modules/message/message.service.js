@@ -1,32 +1,50 @@
-import Message from "./message.model.js"
-import User from "../user/user.model.js"
-import Conversation from "../conversation/conversation.model.js";
 import ApiError from "../../helpers/apiError.js";
 import { getIO, getUserSocket } from "../../socket.server.js";
+import Conversation from "../conversation/conversation.model.js";
+import User from "../user/user.model.js";
+import Message from "./message.model.js";
 
 
 export const sendMessageService = async(senderId, receiverId, content, type) => {
-    if (!content) {
+    if (!receiverId || typeof receiverId.toString !== "function") {
+        throw new ApiError(400, "Receiver is required", "RECEIVER_REQUIRED");
+    }
+    if (typeof content !== "string" || !content.trim()) {
         throw new ApiError(400, "Message is required", "MESSAGE_REQUIRED");
     }
+    if (content.trim().length > 2000) {
+        throw new ApiError(400, "Message cannot exceed 2000 characters", "MESSAGE_TOO_LONG");
+    }
+    if (!["text", "image", "link", "code"].includes(type)) {
+        throw new ApiError(400, "Invalid message type", "INVALID_MESSAGE_TYPE");
+    }
+
+    content = content.trim();
 
     //allowing self chat
-    const isSelfChat = senderId === receiverId;
+    const isSelfChat = senderId.toString() === receiverId.toString();
 
     let conversation;
     if (isSelfChat) { // ha apne aap ko message karna hai
         conversation = await Conversation.findOne({
-            participants: [senderId],
+            participants: senderId,
+            type: "private",
+            $expr: {
+                $eq: [{ $size: "$participants" }, 1]
+            },
         });
 
         if (!conversation) {
             conversation = await Conversation.create({
                 participants:  [senderId],
+                type: "private",
+                lastMessage: null,
                 unreadCount:{
                     [senderId]: 0,
                 }
             });
-        }       
+        }
+
     } else { // dusra user hai
         const receiver = await User.findById(receiverId);
 
@@ -37,7 +55,9 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
         conversation = await Conversation.findOne({
             participants: {
                 $all: [senderId, receiverId],
-            }
+                $size: 2,
+            },
+            type: "private"
         });
 
         if (!conversation) {
@@ -51,8 +71,8 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
             });
         }
     }
-    
-    //message model creating 
+
+    //message model creating
     const message = await Message.create({
         conversationId: conversation._id,
         senderId,
@@ -61,16 +81,16 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
         deliveredAt: new Date(),
     });
 
-    
+
     //updating conversation metadata
     const update = {
         lastMessage: message._id,
         lastMessageAt: new Date(),
     };
-    
+
     const receiverSocket = getUserSocket(receiverId);
     const isReceiverActive = receiverSocket && receiverSocket.activeConversation === conversation._id.toString();
-    
+
     if (!isSelfChat) {
         if (!isReceiverActive) {
             update.$inc = { [`unreadCount.${receiverId}`]: 1};
@@ -79,7 +99,7 @@ export const sendMessageService = async(senderId, receiverId, content, type) => 
         }
 
     }
-    
+
     await Conversation.updateOne(
         {_id: conversation._id},
         update,

@@ -3,17 +3,15 @@ import { sendMessageService } from "./message.service.js";
 
 export const messageController = async(req, res, next) => {
     try {
-        const receiverId = req.body.receiverId;
-        const content = req.body.content;
-        const type = req.body.type;
+        const { receiverId, content, type } = req.validatedData;
         const senderId = req.user._id;
-        
+
         const { message, conversation } = await sendMessageService(senderId, receiverId, content, type);
-        
+
         // const io = getIO();
         // io.to(`user:${receiverId}`).emit("new_message", message);
         // io.to(`chat:${conversationId}`); // for active chat UI OPTIONAL
-        
+
         res.status(200).json({
             success: true,
             message: "Message sent",

@@ -61,10 +61,7 @@ export function hashInviteToken(inviteToken) {
 }
 
 // CREATE EPHERMAL CHAT SESSION TOKEN
-const generateCode = customAlphabet(
-    "ABCDEFGHJKLMNPQRSTUVWXYZ123456789",
-    6
-);
+const generateCode = customAlphabet( "123456789", 4 );
 
 export function generateSessionCode() {
   return generateCode();

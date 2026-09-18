@@ -1,11 +1,11 @@
+import { FRONTEND_URL } from "../../../config/env.js";
 import ApiError from "../../../helpers/apiError.js";
 import {
-  createSession,
-  joinSession,
-  verifySession,
+    createSession,
+    getAllParticipant,
+    joinSession,
+    verifySession,
 } from "./session.service.js";
-import { FRONTEND_URL } from "../../../config/env.js";
-import { getAllParticipant } from "./session.service.js";
 
 // CREATE SESSION
 export const generateSessionController = async (req, res, next) => {
@@ -63,9 +63,12 @@ export const joinSessionController = async (req, res, next) => {
         "Session Code is required",
         "SESSION_CODE_REQUIRED",
       );
-    if (!name) throw new ApiError(400, "Name is required", "NAME_REQUIRED");
+    if (typeof name !== "string" || !name.trim())
+      throw new ApiError(400, "Name is required", "NAME_REQUIRED");
+    if (name.trim().length > 80)
+      throw new ApiError(400, "Name cannot exceed 80 characters", "NAME_TOO_LONG");
 
-    const { participant, token } = await joinSession(code, name);
+    const { participant, token } = await joinSession(code, name.trim());
 
     res.status(201).json({
       success: true,
