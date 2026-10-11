@@ -58,8 +58,6 @@ export const initSocket = (server) => {
     io.on("connection", (socket) => {
         const userId = socket.user.id;
 
-        console.log("User connected:", userId, typeof userId);
-
         //  Add socket
         if (!onlineUser.has(userId)) {
             onlineUser.set(userId, new Set());
@@ -71,8 +69,6 @@ export const initSocket = (server) => {
 
         // send the current user list to newly connectted client
         socket.emit("online_users", [...onlineUser.keys()]);
-
-        console.log("Current sockets for user:", onlineUser.get(userId));
 
         // join personal room
         socket.join(`user:${userId}`);
@@ -93,8 +89,6 @@ export const initSocket = (server) => {
             socket.join(`chat:${conversationId}`);
             socket.activeConversation = conversationId;
             ack?.({ success: true });
-
-            console.log(`User ${userId} joined chat ${conversationId}`);
         });
 
 
@@ -130,19 +124,13 @@ export const initSocket = (server) => {
 
         // disconnect
         socket.on("disconnect", () => {
-            console.log("User disconnected:", userId);
-
             const userSockets = onlineUser.get(userId);
 
             if (userSockets) {
                 userSockets.delete(socket.id);
 
-                console.log("Remaining sockets:", userSockets);
-
                 if (userSockets.size === 0) {
                     onlineUser.delete(userId);
-
-                    console.log("User is fully offline:", userId);
 
                     io.emit("user_offline", { userId });
                 }

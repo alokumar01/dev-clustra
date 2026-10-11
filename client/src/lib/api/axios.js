@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -36,7 +37,6 @@ const processQueue = (error) => {
   refreshQueue.forEach((promise) => {
     if (error) {
       promise.reject(error);
-      console.log("Interceptor triggered", error?.response?.status);
     } else {
       promise.resolve();
     }
@@ -51,8 +51,15 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
+    const context = {
+      area: requestUrl.startsWith("/auth/") ? "authentication" : "api",
+      method: originalRequest?.method?.toUpperCase(),
+      status: error.response?.status,
+      code: error.code,
+    };
 
     if (!error.response) {
+      logger.error("api.request.network_failure", context, error);
       toast.error("Network error. Please check your connection.");
       return Promise.reject(error);
     }
@@ -60,9 +67,12 @@ api.interceptors.response.use(
     const status = error.response.status;
 
     if (status >= 500) {
+      logger.error("api.request.server_failure", context, error);
       toast.error("Server error. Please try again later.");
       return Promise.reject(error);
     }
+
+    logger.warn("api.request.failed", context);
 
     if (shouldSkipRefresh(requestUrl)) {
       return Promise.reject(error);
@@ -83,8 +93,6 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log("Refresh called");
-
         await api.post("/auth/refresh");
 
         //  fetch fresh user after refresh

@@ -19,8 +19,8 @@ import ThemeProvider from "@/components/Provider/ThemeProvider";
 // ${geistSans.variable} ${geistMono.variable}
 
 export const metadata = {
-  title: "DevClustra - Real Time Collaboration Tool",
-  description: "Designed & Developed By Aalok Kumar",
+  title: "Dev-Clustra — Real-time chat",
+  description: "Private conversations by invite and temporary chat rooms for guests.",
 };
 
 export default function RootLayout({ children }) {

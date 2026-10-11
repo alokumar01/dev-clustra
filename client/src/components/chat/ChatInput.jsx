@@ -1,6 +1,6 @@
-import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
-import { Smile, Paperclip, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '@/store/socketStore';
 
@@ -9,6 +9,7 @@ export default function ChatInput({ content, setContent, onSend, conversationId 
   const canSend = content.trim().length > 0;
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Handle typing indicator
   const handleChange = (e) => {
@@ -54,7 +55,8 @@ export default function ChatInput({ content, setContent, onSend, conversationId 
       setIsTyping(false);
     }
 
-    onSend();
+    onSend(content);
+    inputRef.current?.focus({ preventScroll: true });
   }
 
   useEffect(() => {
@@ -70,32 +72,32 @@ export default function ChatInput({ content, setContent, onSend, conversationId 
 
 
   return (
-    <div className="border-t border-border/70 bg-background/90 px-3 py-3 shadow-sm backdrop-blur-xl sm:px-4">
-      <div className="flex w-full items-center gap-2 rounded-2xl border border-border bg-secondary/35 p-2">
-        {/* <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Emoji">
-          <Smile className="size-[18px]" />
-        </Button> */}
-        <Input
+    <div className="shrink-0 border-t border-border/70 bg-background/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-sm backdrop-blur-xl sm:px-4">
+      <div className="flex w-full items-end gap-2 rounded-2xl border border-border bg-secondary/35 p-2">
+        <Textarea
+          ref={inputRef}
           value={content}
           onChange={handleChange}
           placeholder="Type a message..."
-          className="h-11 flex-1 border-transparent bg-background shadow-sm focus-visible:border-ring"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
+          aria-label="Type a message..."
+          rows={1}
+          enterKeyHint="send"
+          className="max-h-36 min-h-11 flex-1 resize-none overflow-y-auto border-transparent bg-background px-3 py-2.5 text-base shadow-sm focus-visible:border-ring focus-visible:ring-0 md:text-sm"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              void handleSend();
             }
           }}
         />
-        {/* <Button variant="ghost" size="icon" className="hidden rounded-xl sm:inline-flex" aria-label="Attach file">
-          <Paperclip className="size-[18px]" />
-        </Button> */}
         <Button
-          onClick={handleSend}
+          type="button"
+          onClick={() => void handleSend()}
           disabled={!canSend}
-          className="rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+          className="size-11 shrink-0 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
           size="icon"
           aria-label="Send message"
+          title="Send message"
         >
           <Send className="size-4.5" />
         </Button>
@@ -103,53 +105,3 @@ export default function ChatInput({ content, setContent, onSend, conversationId 
     </div>
   );
 }
-
-
-
-// User
-
-// H
-
-// ↓
-
-// typing:start
-
-// ↓
-
-// Timer starts
-
-// ↓
-
-// e
-
-// ↓
-
-// Cancel timer
-
-// ↓
-
-// New timer
-
-// ↓
-
-// l
-
-// ↓
-
-// Cancel timer
-
-// ↓
-
-// New timer
-
-// ↓
-
-// Stops typing
-
-// ↓
-
-// 2 sec
-
-// ↓
-
-// typing:stop

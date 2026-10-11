@@ -3,18 +3,20 @@
 import { getPendingAction, PENDING_ACTION_CHANGED_EVENT } from "@/lib/pendingAction";
 import { sessionSocket } from "@/store/socketStore";
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 
 export default function SessionNameSpaceSocketProvider({ children }) {
     useEffect(() => {
         const handleConnect = () => {
-            console.log("Session socket connected:", sessionSocket.id);
+            logger.info("socket.session.connected", { area: "session_socket" });
         };
 
         const handleConnectError = (error) => {
-            console.error(
-                "Session socket connection error:",
-                error.message
+            logger.error(
+                "socket.session.connection_failed",
+                { area: "session_socket" },
+                error,
             );
         };
 
@@ -54,4 +56,3 @@ export default function SessionNameSpaceSocketProvider({ children }) {
 
     return children;
 }
-

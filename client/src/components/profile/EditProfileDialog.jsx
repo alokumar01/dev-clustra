@@ -36,6 +36,7 @@ import { toast } from "sonner";
 export default function EditProfileDialog({ user }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getMe = useAuthStore((state) => state.getMe);
   const [preview, setPreview] = useState(user?.avatar || "");
@@ -71,6 +72,7 @@ export default function EditProfileDialog({ user }) {
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      setErrorMessage("");
 
       const hasAvatarChange = !!formData.avatar;
 
@@ -113,11 +115,11 @@ export default function EditProfileDialog({ user }) {
       setOpen(false);
 
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
+      const message = error?.response?.data?.message ||
         error?.message ||
-        "Failed to update profile"
-      );
+        "Failed to update profile. Check your connection and try again.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -147,6 +149,11 @@ export default function EditProfileDialog({ user }) {
         </DialogHeader>
 
         <div className="space-y-6 px-5 py-5 sm:px-6">
+          {errorMessage && (
+            <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm leading-6 text-destructive">
+              {errorMessage}
+            </p>
+          )}
           {/* Avatar */}
 
           <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-secondary/35 p-5 sm:flex-row">
@@ -266,7 +273,7 @@ export default function EditProfileDialog({ user }) {
                 Saving...
               </>
             ) : (
-              "Save Changes"
+              errorMessage ? "Try again" : "Save Changes"
             )}
           </Button>
         </DialogFooter>

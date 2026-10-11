@@ -2,6 +2,7 @@
 
 import { loginWithAxios } from "@/app/services/auth.service";
 import { api } from "@/lib/api/axios";
+import { logger } from "@/lib/logger";
 import { toast } from "sonner";
 import { create } from "zustand";
 
@@ -60,8 +61,13 @@ export const useAuthStore = create((set, get) => ({
             // redirect("/login");
 
         } catch (err) {
+            logger.warn("auth.logout.failed", {
+                area: "authentication",
+                status: err.response?.status,
+                code: err.code,
+            });
             toast.error(
-                err.response?.message || "Logout failed"
+                err.response?.data?.message || "Logout failed"
             )
         } finally {
             set({

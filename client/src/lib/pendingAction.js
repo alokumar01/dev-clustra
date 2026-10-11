@@ -1,4 +1,6 @@
 
+import { logger } from "@/lib/logger";
+
 const STORAGE_KEY = "pendingAction";
 export const PENDING_ACTION_CHANGED_EVENT = "pending-action:changed";
 
@@ -16,8 +18,8 @@ export const getPendingAction = () => {
 
     try {
         return JSON.parse(data);
-    } catch (error) {
-        console.log("Failed to parse pending action: ", error);
+    } catch {
+        logger.warn("pending_action.parse_failed", { area: "session_storage" });
         return null;
     }
 };

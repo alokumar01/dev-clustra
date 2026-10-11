@@ -4,17 +4,23 @@ import ChatHeader from "./ChatHeader"
 import ChatMessages from "./ChatMessages"
 import ChatInput from "./ChatInput"
 import { useEffect, useRef, useState, useCallback } from "react"
-import { FetchSingleChatConversation, MarkAsRead, SendMessage } from "@/app/services/conversation.service"
+import {
+  fetchSingleChatConversation,
+  markAsRead,
+  sendMessage,
+} from "@/app/services/conversation.service"
 import { useAuthStore } from "@/store/authStore"
 import { useChatStore } from "@/store/chatStore"
 import { socket } from "@/store/socketStore"
+import { logger } from "@/lib/logger"
 
 
 export default function ChatScreen({ selectedChat, onBack }) {
   const user = useAuthStore((state) => state.user);
-  // console.log("user from chat screen:", user)
   const emptyMessages = useRef([]);
   const conversationId = selectedChat?._id;
+  const activeConversationIdRef = useRef(conversationId);
+  activeConversationIdRef.current = conversationId;
   const messages = useChatStore((state) =>
     conversationId
       ? state.messagesByConversation[conversationId] || emptyMessages.current
@@ -25,6 +31,9 @@ export default function ChatScreen({ selectedChat, onBack }) {
   );
   const appendMessageToConversation = useChatStore(
     (state) => state.appendMessageToConversation
+  );
+  const updateMessageInConversation = useChatStore(
+    (state) => state.updateMessageInConversation
   );
   const markConversationRead = useChatStore(
     (state) => state.markConversationRead
@@ -39,13 +48,14 @@ export default function ChatScreen({ selectedChat, onBack }) {
 
   // store information for last message and hasMore nextCursor
   const [isLoadingMore, setLoadingMore] = useState(false);
-  // const [nextCursor, setNextCursor] = useState(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [messagesError, setMessagesError] = useState("");
+  const [olderMessagesError, setOlderMessagesError] = useState("");
   const nextCursorRef = useRef(null);
   const [hasMore, setHasMore] = useState(false);
 
 
   const [content, setContent] = useState("");
-  // isonline ko chat header me jisse baat karna hai uska data bhejna hai not user id
   const isOnline = useChatStore((state) => state.isUserOnline(selectedChat?.chatWith?._id));
 
   // this useEffect for SOCKET IO LISTENING FOR JOIN ROOMS
@@ -62,47 +72,61 @@ export default function ChatScreen({ selectedChat, onBack }) {
   }, [selectedChat._id]);
 
   // fetch all message content
-  useEffect(() => {
-    if (!selectedChat._id) return;
-    // reset pagination state for new conversation
+  const loadMessages = useCallback(async () => {
+    if (!conversationId) return;
+
+    setIsLoadingMessages(true);
+    setMessagesError("");
     setLoadingMore(false);
     nextCursorRef.current = null;
     setHasMore(false);
-
-    const fetchMessages = async () => {
-      try {
-        const res = await FetchSingleChatConversation(conversationId);
-        // latest cursor information
-        // console.log("chat screen message:", res)
+    try {
+      const res = await fetchSingleChatConversation(conversationId);
+      setMessagesForConversation(
+        conversationId,
+        [...(res.data?.messages || [])].reverse()
+      );
+      if (activeConversationIdRef.current === conversationId) {
         nextCursorRef.current = res.data.nextCursor;
         setHasMore(res.data.hasMore);
-
-        // console.log("next cursor latest:", nextCursorRef.current);
-
-        // backend newest -> oldest
-        // ui oldest -> newest
-        setMessagesForConversation(
-          selectedChat._id,
-          [...(res.data?.messages || [])].reverse()
-        );
-      } catch (err) {
-        console.error(err);
       }
-    };
+    } catch (err) {
+      logger.warn("chat.messages.load_failed", {
+        area: "chat",
+        operation: "fetch_messages",
+        code: err.code,
+      });
+      if (activeConversationIdRef.current === conversationId) {
+        setMessagesError("Could not load messages. Check your connection and try again.");
+      }
+    } finally {
+      if (activeConversationIdRef.current === conversationId) {
+        setIsLoadingMessages(false);
+      }
+    }
+  }, [conversationId, setMessagesForConversation]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+    // reset pagination state for new conversation
+    loadMessages();
 
     const markRead = async () => {
       try {
-        markConversationRead(selectedChat._id);
-        updateConversationMeta(selectedChat._id, { unreadCount: 0 });
-        await MarkAsRead(selectedChat._id);
+        markConversationRead(conversationId);
+        updateConversationMeta(conversationId, { unreadCount: 0 });
+        await markAsRead(conversationId);
       } catch (err) {
-        console.log(err);
+        logger.warn("chat.messages.mark_read_failed", {
+          area: "chat",
+          operation: "mark_read",
+          code: err.code,
+        });
       }
     };
 
-    fetchMessages();
     markRead();
-  }, [conversationId, selectedChat._id, markConversationRead, setMessagesForConversation, updateConversationMeta]);
+  }, [conversationId, loadMessages, markConversationRead, updateConversationMeta]);
 
 
   // load older messages when user reaches top
@@ -112,21 +136,14 @@ export default function ChatScreen({ selectedChat, onBack }) {
     if (!hasMore) return;
 
     setLoadingMore(true);
+    setOlderMessagesError("");
 
     // call api with nextCursor
     try {
-      const res = await FetchSingleChatConversation( selectedChat?._id, {
+      const res = await fetchSingleChatConversation(selectedChat?._id, {
           before: nextCursorRef.current,
         }
       );
-
-      // console.log("older messages response:", res.data);
-      // console.log("older message length", res.data.messages.length)
-
-      // update pagination information
-      nextCursorRef.current = res.data.nextCursor;
-      setHasMore(res.data.hasMore);
-      // console.log("next cursor after older messages:", nextCursorRef.current);
 
       // backend returns newest -> oldest
       // convert into oldest -> newest before prepend
@@ -134,10 +151,23 @@ export default function ChatScreen({ selectedChat, onBack }) {
         selectedChat._id,
         [...(res.data?.messages || [])].reverse()
       );
+      if (activeConversationIdRef.current === selectedChat._id) {
+        nextCursorRef.current = res.data.nextCursor;
+        setHasMore(res.data.hasMore);
+      }
     } catch (err) {
-      console.error(err);
+      logger.warn("chat.messages.older_load_failed", {
+        area: "chat",
+        operation: "fetch_older_messages",
+        code: err.code,
+      });
+      if (activeConversationIdRef.current === selectedChat._id) {
+        setOlderMessagesError("Could not load older messages.");
+      }
     } finally {
-      setLoadingMore(false);
+      if (activeConversationIdRef.current === selectedChat._id) {
+        setLoadingMore(false);
+      }
     }
   }, [
     selectedChat?._id,
@@ -146,17 +176,44 @@ export default function ChatScreen({ selectedChat, onBack }) {
     prependMessagesToConversation,
   ]);
 
-  // SEND MESSAGE AND UPDATE UI ---> OPTIMISTIC UI
-  async function OnClick() {
-    if (!content.trim() || !selectedChat?._id) return;
+  const sendPendingMessage = useCallback(async (message, receiverId) => {
+    updateMessageInConversation(message.conversationId, message._id, {
+      sendStatus: "sending",
+    });
+
+    try {
+      await sendMessage({
+        receiverId,
+        content: message.content,
+        type: "text",
+      });
+      updateMessageInConversation(message.conversationId, message._id, {
+        sendStatus: "sent",
+      });
+    } catch (err) {
+      updateMessageInConversation(message.conversationId, message._id, {
+        sendStatus: "failed",
+      });
+      logger.warn("chat.messages.send_failed", {
+        area: "chat",
+        operation: "send_message",
+        code: err.code,
+      });
+    }
+  }, [updateMessageInConversation]);
+
+  // Add the message immediately, then reflect the API result on that message.
+  function OnClick(messageContent) {
+    if (!messageContent?.trim() || !selectedChat?._id || !user?._id) return;
 
     const newMessage = {
-      _id: Date.now(),
-      content: content,
+      _id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+      content: messageContent,
       senderId: user._id,
       createdAt: new Date().toISOString(),
       messageType: "text",
       conversationId: selectedChat._id,
+      sendStatus: "sending",
     };
 
     appendMessageToConversation(selectedChat._id, newMessage);
@@ -165,30 +222,28 @@ export default function ChatScreen({ selectedChat, onBack }) {
       lastMessageAt: newMessage.createdAt,
     });
     setContent("");
-
-    try {
-      await SendMessage({
-        receiverId: selectedChat.chatWith?._id,
-        content,
-        type: "text",
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    void sendPendingMessage(newMessage, selectedChat.chatWith?._id);
   }
 
   return (
-    <div className="flex h-full min-w-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 min-w-0 flex-col bg-background">
       <ChatHeader selectedChat={selectedChat} isOnline={isOnline} onBack={onBack} />
-      {/* <ScrollArea className="h-full"> */}
-        <ChatMessages
-          messages={messages}
-          selectedChat={selectedChat}
-          onLoadOlder={loadOlderMessages}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-        />
-      {/* </ScrollArea> */}
+      <ChatMessages
+        key={conversationId}
+        messages={messages}
+        selectedChat={selectedChat}
+        onLoadOlder={loadOlderMessages}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
+        isLoading={isLoadingMessages}
+        error={messagesError}
+        onRetry={loadMessages}
+        olderMessagesError={olderMessagesError}
+        onRetryOlder={loadOlderMessages}
+        onRetryMessage={(message) =>
+          sendPendingMessage(message, selectedChat.chatWith?._id)
+        }
+      />
       <ChatInput content={content} setContent={setContent} onSend={OnClick} conversationId={conversationId} />
     </div>
   )

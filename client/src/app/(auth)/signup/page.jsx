@@ -15,17 +15,19 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/lib/useDebounce";
+import { logger } from "@/lib/logger";
 
 export default function SignupPage() {
     const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const router = useRouter();
     const [formData, setFormData] = useState({ username: "", email: "", password: "",});
     const [usernameStatus, setUsernameStatus] = useState("idle");
     const [userAvailable, setUserAvailable] = useState(null);
+    const [usernameCheckAttempt, setUsernameCheckAttempt] = useState(0);
     const latestUsername = useRef("");
 
     function handleChange(event) {
@@ -35,6 +37,7 @@ export default function SignupPage() {
             ...current,
             [name]: value,
         }));
+        setErrorMessage("");
 
         if (name === "username") {
             latestUsername.current = value.trim();
@@ -54,7 +57,7 @@ export default function SignupPage() {
         }
 
         // if length of username is less than 3 then return
-        if (debouncedSearch.trim().length < 3) {
+        if (debouncedSearch.trim().length < 3 || debouncedSearch.trim().length > 18) {
             setUserAvailable(null);
             setUsernameStatus("validation");
             return;
@@ -78,7 +81,11 @@ export default function SignupPage() {
 
                 setUserAvailable(null);
                 setUsernameStatus("error");
-                console.error("error in check username in signup: ", error);
+                logger.warn("auth.username_check.failed", {
+                    area: "authentication",
+                    status: error.response?.status,
+                    code: error.code,
+                });
             }
         };
 
@@ -87,7 +94,7 @@ export default function SignupPage() {
         return () => {
             ignore = true;
         };
-    }, [debouncedSearch]);
+    }, [debouncedSearch, usernameCheckAttempt]);
 
     const usernameFeedback = {
         checking: "Checking username...",
@@ -102,16 +109,23 @@ export default function SignupPage() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+        setErrorMessage("");
         setLoading(true);
 
         try {
-            const response = await signupWithAxios(formData);
+            const response = await signupWithAxios({
+                ...formData,
+                username: formData.username.trim(),
+                email: formData.email.trim(),
+            });
 
             toast.success(response?.message || "Signup successful!");
-            router.push("/login");
+            router.push("/login?registered=1");
 
         } catch (submitError) {
-            toast.error(submitError.response?.data?.message || "Unable to create account.");
+            const message = submitError.response?.data?.message || "Unable to create account. Please try again.";
+            setErrorMessage(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -120,13 +134,13 @@ export default function SignupPage() {
     return (
         <AuthShell
             badge="Create account"
-            title="Create your DevClustra account"
+            title="Create your Dev-Clustra account"
             description="Create an account, verify your email, and then continue to the collaboration workspace."
             alternatePrompt="Already have an account?"
             alternateHref="/login"
             alternateLabel="Sign in"
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
                 <FieldSet>
                     <FieldGroup className="gap-4">
                         <Field>
@@ -138,10 +152,13 @@ export default function SignupPage() {
                                     type="text"
                                     autoComplete="username"
                                     required
+                                    minLength={3}
+                                    maxLength={18}
                                     value={formData.username}
                                     onChange={handleChange}
                                     placeholder="Choose a username"
                                     aria-invalid={isUsernameInvalid}
+                                    aria-describedby="username-feedback"
                                     className="h-11 rounded-xl bg-background pr-10"
                                 />
                                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -156,7 +173,7 @@ export default function SignupPage() {
                                     )}
                                 </div>
                             </div>
-                            <FieldDescription
+                            <FieldDescription id="username-feedback"
                                 className={
                                     usernameStatus === "available"
                                         ? "text-green-600"
@@ -168,6 +185,16 @@ export default function SignupPage() {
                             >
                                 {usernameFeedback || "This name appears in conversations and invite flows."}
                             </FieldDescription>
+                            {usernameStatus === "error" && (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-sm"
+                                    onClick={() => setUsernameCheckAttempt((attempt) => attempt + 1)}
+                                >
+                                    Check again
+                                </Button>
+                            )}
                         </Field>
 
                         <Field>
@@ -179,6 +206,9 @@ export default function SignupPage() {
                                 name="email"
                                 type="email"
                                 autoComplete="email"
+                                inputMode="email"
+                                spellCheck={false}
+                                required
                                 value={formData.email}
                                 onChange={handleChange}
                                 placeholder="you@example.com"
@@ -193,6 +223,7 @@ export default function SignupPage() {
                                 name="password"
                                 autoComplete="new-password"
                                 required
+                                minLength={6}
                                 value={formData.password}
                                 onChange={handleChange}
                                 placeholder="Create a strong password"
@@ -203,16 +234,19 @@ export default function SignupPage() {
                 </FieldSet>
 
 
+                {errorMessage && (
+                    <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm leading-6 text-destructive">
+                        {errorMessage}
+                    </p>
+                )}
+
                 <Button
                     type="submit"
                     disabled={disableSubmit}
                     className="h-11 w-full rounded-xl text-sm font-semibold cursor-pointer"
                 >
-                    {loading ? <Spinner /> : "Create account"}
-                    <ArrowRight className="size-4" />
+                    {loading ? <><Spinner /> Creating account…</> : <>Create account<ArrowRight className="size-4" /></>}
                 </Button>
-
-                <Separator />
             </form>
         </AuthShell>
     );

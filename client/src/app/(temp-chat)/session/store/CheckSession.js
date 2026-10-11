@@ -1,10 +1,6 @@
 import { getPendingAction } from "@/lib/pendingAction";
-import { toast } from "sonner";
-
-
 export default function AuthCheckSession( code ) {
     if (!code) {
-        console.warn("AuthCheckSession: Missing required code parameter");
         return null;
     }
 

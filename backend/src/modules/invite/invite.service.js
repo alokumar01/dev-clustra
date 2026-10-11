@@ -147,8 +147,6 @@ export const acceptInviteService = async({ token, userId }) => {
             unreadCount: conversationWithParticipants.unreadCount.get(inviter.toString()) ?? 0
         };
 
-        console.log("conversation payload: ",conversationPayload)
-
     // Socker event for inviter, inform to inviter that someone accepte your invitation
     const io =  getIO(); // conversation here is the mongodb one document not matched with what frontend needs
     io.to(`user:${inviter.toString()}`).emit("conversation_created", conversationPayload);

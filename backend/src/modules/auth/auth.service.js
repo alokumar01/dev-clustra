@@ -47,8 +47,8 @@ export const signupService = async({ username, email, password })  => {
             type: "signup"
         })
 
-    } catch (error) {
-        console.info('email failed', error);
+    } catch {
+        console.error("auth.signup.verification_email_failed");
     }
 
     return {
@@ -101,8 +101,7 @@ export const resendVerificationEmailService = async({ email }) => {
             token: emailToken,
             type: "resend"
         })
-    } catch (error) {
-        console.log("Email sent failed", error);
+    } catch {
         throw new ApiError(500, "Failed to sent email, Try again later");
     }
 
@@ -180,8 +179,6 @@ export const logoutService = async({ refreshToken }) => {
 }
 
 export const refreshAccessTokenService = async({ oldRfToken }) => {
-    //verify the token, throws error if expired or anything else
-    // console.log("cookies token:", oldRfToken)
     let decode;
     try {
         decode = jwt.verify(oldRfToken, JWT_REFRESH_SECRET);
@@ -198,13 +195,6 @@ export const refreshAccessTokenService = async({ oldRfToken }) => {
         "refreshToken.token": oldRfToken // checking this token exisits in array or not
     });
 
-    // const user = await User.findById(decode.sub);
-    // console.log("Cookie token:", oldRfToken);
-    // console.log(
-    //     "Exists in DB:",
-    //     user.refreshToken.some(rt => rt.token === oldRfToken)
-    // );
-
     if (!user) {
         throw new ApiError(401, "Invalid refresh token", "INVALID_REFRESH_TOKEN");
     }
@@ -217,13 +207,9 @@ export const refreshAccessTokenService = async({ oldRfToken }) => {
     //sab sahi hai, then me generate dono token generate kar raha hu
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
-    // console.log("Generated:", refreshToken);
-
     //saving refreshtoken to db
     user.refreshToken.push({ token: refreshToken });
     await user.save();
-
-    // console.log("Saved:", user.refreshToken[user.refreshToken.length - 1].token);
 
     return { accessToken, refreshToken };
 }

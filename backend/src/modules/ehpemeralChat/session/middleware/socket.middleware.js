@@ -15,7 +15,6 @@ export const sessionSocketAuth = async (socket, next) => {
       );
 
     const decode = jwt.verify(token, JWT_SECRET);
-    // console.log("DECODED IN SOCKET MIDDLEWARE: ", decode);
 
     // VERIFY THE TOKEN;
     const sessionId = decode.sessionId;
@@ -24,7 +23,6 @@ export const sessionSocketAuth = async (socket, next) => {
 
     // FIRST CHECK SESSION EXIST
     const session = await Session.findById(sessionId);
-    // console.log("SESSION FOUND IN MIDDLEWARE: ", session);
 
     if (!session)
       throw new ApiError(404, "Session does not exist", "SESSION_NOT_EXIST");

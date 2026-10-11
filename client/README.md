@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Frontend logging and error monitoring
+
+Frontend diagnostics go through the structured logger in `src/lib/logger.js`.
+Development writes structured records to the browser console. Production sends
+error-level events to Sentry and does not write application logs to the console.
+Request and user context is intentionally omitted or sanitized; credentials,
+tokens, cookies, message contents, and user details must not be logged.
+
+Set `NEXT_PUBLIC_SENTRY_DSN` in the client environment to enable production
+error reporting. If it is unset, Sentry reporting is disabled. Route and global
+React error boundaries report uncaught rendering errors and provide a retry UI.

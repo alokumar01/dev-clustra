@@ -2,22 +2,29 @@
 
 import { useAuthStore } from "@/store/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Check, CheckCheck } from "lucide-react";
+import { Button } from "../ui/button";
+import { AlertCircle, Check, CheckCheck, LoaderCircle } from "lucide-react";
 import { Bubble, BubbleContent } from "../ui/bubble";
 import { cn } from "@/lib/utils";
 import formatMessageTime from "@/lib/formatDate";
 
-export default function ChatBubble({ message, selectedChat }) {
+export default function ChatBubble({
+  message,
+  selectedChat,
+  showAvatar = true,
+  showMeta = true,
+  onRetry,
+}) {
   const user = useAuthStore((state) => state.user);
-  const isMe = message.senderId === user?._id;
+  const isMe = message.senderId?.toString() === user?._id?.toString();
   const senderName = selectedChat?.chatWith?.username || "Contact";
   const time = formatMessageTime(message.createdAt, true);
   const status = getMessageStatus(message);
 
   return (
     <div className={cn("flex w-full items-end gap-2 px-1", isMe ? "justify-end" : "justify-start")}>
-      {!isMe && (
-        <Avatar className="mb-5 size-8">
+      {!isMe && showAvatar && (
+        <Avatar className="mb-1 size-7">
           <AvatarImage src={selectedChat?.chatWith?.avatar} alt={`${senderName} avatar`} />
           <AvatarFallback className="text-xs">{getInitial(senderName)}</AvatarFallback>
         </Avatar>
@@ -36,17 +43,17 @@ export default function ChatBubble({ message, selectedChat }) {
         >
           <BubbleContent
             className={cn(
-              "max-w-full rounded-2xl px-3.5 py-2.5 text-[0.95rem] leading-6 shadow-sm",
+              "max-w-full px-3.5 py-2.5 text-sm leading-6 sm:text-[0.95rem]",
               isMe
-                ? "rounded-br-md border-blue-600 bg-blue-600 text-white shadow-blue-600/10"
-                : "rounded-bl-md border-border bg-background text-foreground shadow-zinc-950/5 dark:bg-card"
+                ? "rounded-2xl rounded-br-md border-blue-600 bg-blue-600 text-white"
+                : "rounded-2xl rounded-bl-md border-border bg-background text-foreground dark:bg-card"
             )}
           >
             <p className="whitespace-pre-wrap wrap-break-word">{message.content}</p>
           </BubbleContent>
         </Bubble>
 
-        <div
+        {showMeta && <div
           className={cn(
             "mt-1 flex h-4 items-center gap-1 text-[11px] leading-none text-muted-foreground",
             isMe ? "justify-end pr-1" : "justify-start pl-1"
@@ -55,40 +62,47 @@ export default function ChatBubble({ message, selectedChat }) {
           <span>{time}</span>
 
           {isMe && (
-            <span
-              className={cn(
-                "inline-flex items-center",
-                status.type === "read" && "text-blue-600 dark:text-blue-400"
-              )}
-              title={status.label}
-              aria-label={status.label}
-            >
-              {status.type === "sent" ? (
-                <Check className="size-3.5" />
-              ) : (
-                <CheckCheck className="size-3.5" />
-              )}
-            </span>
+            message.sendStatus === "failed" ? (
+              <span className="inline-flex items-center gap-1 text-destructive">
+                <AlertCircle className="size-3.5" aria-hidden="true" />
+                <span>Not sent</span>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs text-destructive underline underline-offset-2"
+                  onClick={() => onRetry?.(message)}
+                >
+                  Retry
+                </Button>
+              </span>
+            ) : message.sendStatus === "sending" ? (
+              <span className="inline-flex items-center gap-1" aria-label="Sending">
+                <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                <span>Sending</span>
+              </span>
+            ) : (
+              <span
+                className={cn(
+                  "inline-flex items-center",
+                  status.type === "read" && "text-blue-600 dark:text-blue-400"
+                )}
+                title={status.label}
+                aria-label={status.label}
+              >
+                {status.type === "sent" ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <CheckCheck className="size-3.5" />
+                )}
+              </span>
+            )
           )}
-        </div>
+        </div>}
       </div>
     </div>
   );
 }
-
-// function formatMessageTime(value) {
-//   const date = new Date(value);
-
-//   if (Number.isNaN(date.getTime())) {
-//     return "";
-//   }
-
-//   return date.toLocaleTimeString([], {
-//     hour: "2-digit",
-//     minute: "2-digit",
-//     hour12: true
-//   });
-// }
 
 function getMessageStatus(message) {
   if (message.readAt) {

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import {
-  loginWithAxios,
   resendVerificationEmail,
 } from "@/app/services/auth.service";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Separator } from "@/components/ui/separator";
 import { AuthShell } from "@/components/ui/auth-shell";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -25,8 +23,16 @@ import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "@/store/authStore";
 import { useSearchParams } from "next/navigation";
 import { getPendingAction } from "@/lib/pendingAction";
+import { logger } from "@/lib/logger";
 
-// test path name from login page if user comes from invite page already
+function getSafeRedirect(redirect) {
+  if (!redirect?.startsWith("/") || redirect.startsWith("//")) return "/chat";
+
+  const destination = new URL(redirect, window.location.origin);
+  if (destination.origin !== window.location.origin) return "/chat";
+
+  return `${destination.pathname}${destination.search}${destination.hash}`;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,9 +42,11 @@ export default function LoginPage() {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [showVerifyUI, setShowVerifyUI] = useState(false);
-  // const getMe = useAuthStore((store) => store.getMe);
   const login = useAuthStore((store) => store.login);
+  const registered = searchParams.get("registered") === "1";
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -47,38 +55,44 @@ export default function LoginPage() {
       ...current,
       [name]: value,
     }));
+    setErrorMessage("");
+    if (name === "email") setShowVerifyUI(false);
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setErrorMessage("");
     setLoading(true);
 
     try {
-      // const response = await loginWithAxios(formData);
-      const response = await login(formData);
+      const response = await login({
+        ...formData,
+        email: formData.email.trim(),
+      });
       toast.success(response?.message);
-      // await getMe(); // after login it should check for pending action // RACE CONDITION getMe called twice
 
       const pendingAction = getPendingAction();
-      console.log("pending action in login page:", pendingAction);
-
       if (pendingAction && pendingAction.type === "JOIN_INVITE") {
         router.push(`/invite/${pendingAction.payload.token}`);
-        return;
       } else {
         const redirect = searchParams.get("redirect");
-        router.push(redirect || "/chat");
+        router.push(getSafeRedirect(redirect));
       }
-
-
     } catch (submitError) {
       const data = submitError.response?.data;
+      logger.warn("auth.login.failed", {
+        area: "authentication",
+        status: submitError.response?.status,
+        code: data?.code,
+      });
 
       if (data?.code === "EMAIL_NOT_VERIFIED") {
-        toast.error(data.message);
+        setErrorMessage(data.message || "Please verify your account before signing in.");
         setShowVerifyUI(true);
       } else {
-        toast.error(data?.message || "Login failed");
+        const message = data?.message || "Login failed. Check your details and try again.";
+        setErrorMessage(message);
+        toast.error(message);
       }
     } finally {
       setLoading(false);
@@ -87,6 +101,7 @@ export default function LoginPage() {
 
   //handle the resend verification button link
   async function handleResendVerification() {
+    setResendingVerification(true);
     try {
       const res = await resendVerificationEmail(formData.email);
 
@@ -101,22 +116,29 @@ export default function LoginPage() {
 
       setShowVerifyUI(false);
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to send verification mail",
-      );
+      const message = err.response?.data?.message || "Failed to send verification email.";
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setResendingVerification(false);
     }
   }
 
   return (
     <AuthShell
       badge="Welcome back"
-      title="Sign in to DevClustra"
+      title="Sign in to Dev-Clustra"
       description="Use your verified account to continue to the collaboration workspace."
       alternatePrompt="Don't have an account yet?"
-      alternateHref="/signup"
+      alternateHref="/register"
       alternateLabel="Create one"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
+        {registered && (
+          <p role="status" className="rounded-xl border border-emerald-600/20 bg-emerald-600/5 p-3 text-sm leading-6 text-emerald-700 dark:text-emerald-400">
+            Account created. Check your email to verify it before signing in.
+          </p>
+        )}
         <FieldSet>
           <FieldGroup className="gap-4">
             <Field>
@@ -126,6 +148,8 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
+                inputMode="email"
+                spellCheck={false}
                 required
                 value={formData.email}
                 onChange={handleChange}
@@ -150,7 +174,7 @@ export default function LoginPage() {
                 inputClassName="h-11 rounded-xl bg-background"
               />
               <div className="flex justify-end">
-                <Link href="/forgot-password" className="text-sm font-medium text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline">
+                <Link href="/forgot-password" className="min-h-11 inline-flex items-center text-sm font-medium text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -159,16 +183,22 @@ export default function LoginPage() {
           </FieldGroup>
         </FieldSet>
 
+        {errorMessage && (
+          <FieldError role="alert" className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 leading-6">
+            {errorMessage}
+          </FieldError>
+        )}
+
         {showVerifyUI && (
           <FieldError className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 leading-6">
-            Please verify your account before signing in.{" "}
             <Button
               type="button"
               variant="link"
+              disabled={resendingVerification}
               className="h-auto p-0 text-blue-600 underline"
               onClick={handleResendVerification}
             >
-              Resend verification email
+              {resendingVerification ? "Sending verification email…" : "Resend verification email"}
             </Button>
           </FieldError>
         )}
@@ -176,15 +206,10 @@ export default function LoginPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full cursor-pointer rounded-xl text-sm font-semibold"
+          className="h-12 w-full rounded-xl text-sm font-semibold"
         >
-          {loading ? <Spinner /> : "Sign in"}
-          <ArrowRight className="size-4" />
+          {loading ? <><Spinner /> Signing in…</> : <>Sign in<ArrowRight className="size-4" /></>}
         </Button>
-
-        <Separator />
-
-
       </form>
     </AuthShell>
   );

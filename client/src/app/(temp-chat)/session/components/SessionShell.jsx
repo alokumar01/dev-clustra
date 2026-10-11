@@ -11,14 +11,14 @@ export default function SessionShell({ children }) {
   const isDark = resolvedTheme === "dark"
 
   return (
-    <main className="min-h-screen bg-[#f8fafd] text-foreground dark:bg-[#09090b]">
-      <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-[#09090b]/82">
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 shadow-sm backdrop-blur-xl">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-blue-600 shadow-sm dark:border-white/10 dark:bg-zinc-950 dark:text-white">
+            <span className="flex size-9 items-center justify-center rounded-xl border border-border bg-card text-primary shadow-sm">
               <Boxes className="size-4" aria-hidden="true" />
             </span>
-            <span className="text-base font-semibold tracking-normal text-zinc-950 dark:text-white">
+            <span className="text-base font-semibold tracking-tight text-foreground">
               DevClustra
             </span>
           </Link>
@@ -26,7 +26,7 @@ export default function SessionShell({ children }) {
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 rounded-lg border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+            className="size-9 rounded-xl bg-background text-foreground"
             onClick={() => setTheme(isDark ? "light" : "dark")}
             aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
             title={isDark ? "Light theme" : "Dark theme"}

@@ -152,8 +152,6 @@ export const readConversationMessagesService = async(conversationId, userId) => 
             // if server crash then conversation me unread count kaise update hoga
             //SOLUTION --> MONGODB TRANSACTIONS
 
-            // throw new Error("Simulated crash");
-
             //update conversation unread count
             await Conversation.updateOne(
                 { _id: conversationId },
@@ -165,16 +163,11 @@ export const readConversationMessagesService = async(conversationId, userId) => 
                 { session }
             )
 
-            // //STEP4: COMMIT
-            // await session.commitTransaction();
-            // return {modifiedCount: result.modifiedCount, readTime}
         });
 
-        // console.log("from service", finalResult)
         return finalResult;
 
     } catch (error) {
-        // await session.abortTransaction();
         console.error("message read failed ", error);
         throw new ApiError(500, "Failed to mark messages as read", "READ_MESSAGES_TRANSACTION_FAILED")
 
