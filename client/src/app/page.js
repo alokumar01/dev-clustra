@@ -1,27 +1,19 @@
 import Header from "@/components/pages/Header";
 import Hero from "@/components/pages/Hero";
-import WhyDevClustra from "@/components/pages/WhyDevClustra";
+import HowItWorks from "@/components/pages/HowItWorks";
 import Features from "@/components/pages/Features";
-import Architecture from "@/components/pages/Architecture";
-import Journey from "@/components/pages/Journey";
-import TechStack from "@/components/pages/TechStack";
-import Highlights from "@/components/pages/Highlights";
+import EngineeringShowcase from "@/components/pages/EngineeringShowcase";
 import Footer from "@/components/pages/Footer";
-import SessionShell from "./(temp-chat)/session/components/SessionShell";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Header />
       <Hero />
-      <WhyDevClustra />
+      <HowItWorks />
       <Features />
-      <Architecture />
-      <Journey />
-      <TechStack />
-      <Highlights />
+      <EngineeringShowcase />
       <Footer />
-      {/* <SessionShell /> */}
     </main>
   );
 }

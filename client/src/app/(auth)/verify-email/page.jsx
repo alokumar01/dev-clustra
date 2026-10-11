@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, MailCheck, ShieldCheck, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,12 +15,17 @@ export default function VerifyEmail() {
   const token = searchParams.get("token");
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Verifying your email address.");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    let active = true;
+
     async function verify() {
       if (!token) {
-        setStatus("error");
-        setMessage("Verification token is missing.");
+        if (active) {
+          setStatus("invalid");
+          setMessage("Verification token is missing.");
+        }
         return;
       }
 
@@ -28,16 +33,25 @@ export default function VerifyEmail() {
         setStatus("loading");
 
         const response = await verifyVerificationEmail(token);
+        if (!active) return;
 
         setStatus("success");
         setMessage(response?.data?.message || "Your email has been verified.");
-        toast.success(response?.data?.message || "Your email has been verified.")
+        toast.success(response?.data?.message || "Your email has been verified.");
       } catch (error) {
+        if (!active) return;
         const errorMessage =
           error.response?.data?.message ||
           "Verification failed or the link has expired.";
 
-        setStatus("error");
+        const code = error.response?.data?.code;
+        if (!error.response || error.response.status >= 500) {
+          setStatus(typeof navigator !== "undefined" && !navigator.onLine ? "offline" : "retry");
+        } else if (code?.includes("EXPIRED") || /expired/i.test(errorMessage)) {
+          setStatus("expired");
+        } else {
+          setStatus("invalid");
+        }
         setMessage(errorMessage);
 
         toast.error(errorMessage);
@@ -45,22 +59,30 @@ export default function VerifyEmail() {
     }
 
     verify();
-  }, [token]);
+    return () => {
+      active = false;
+    };
+  }, [attempt, token]);
 
   const isLoading = status === "loading";
   const isSuccess = status === "success";
+  const canRetry = status === "retry" || status === "offline";
   const StatusIcon = isLoading ? Spinner : isSuccess ? CheckCircle2 : XCircle;
 
   return (
     <AuthShell
       badge="Email verification"
-      title={isSuccess ? "Email verified" : isLoading ? "Verifying email" : "Verification failed"}
+      title={isSuccess ? "Email verified" : isLoading ? "Verifying email" : status === "expired" ? "Verification link expired" : status === "offline" ? "You’re offline" : status === "retry" ? "Could not verify email" : "Verification failed"}
       description={
         isSuccess
           ? "Your account is ready for login."
           : isLoading
             ? "we're verifying your email"
-            : "The verification link is invalid or has expired."
+            : status === "expired"
+              ? "Request a new verification email to activate your account."
+              : status === "offline" || status === "retry"
+                ? "Check your connection and retry verification."
+                : "The verification link is invalid."
       }
       heroTitle="Email verification keeps the account flow explicit."
       heroDescription="The verification route reads the token from the URL, calls the backend verification API, and shows a clear result state."
@@ -80,12 +102,20 @@ export default function VerifyEmail() {
               ? "You can now sign in with your email and password."
               : isLoading
                 ? "This usually takes a moment."
-                : "Request a new verification email from the login page if the link is expired."}
+                : status === "expired" || status === "invalid"
+                  ? "Request a new verification email from the login page."
+                  : "Your account has not been changed. You can safely retry."}
           </p>
         </div>
+        {canRetry && (
+          <Button type="button" variant="outline" className="h-11 w-full rounded-xl text-sm font-semibold" onClick={() => setAttempt((current) => current + 1)}>
+            <RefreshCw className="size-4" />
+            Try verification again
+          </Button>
+        )}
         <Button asChild className="h-11 w-full rounded-xl text-sm font-semibold">
           <Link href="/login">
-            {isSuccess ? "Go to login" : "Back to login"}
+            {isSuccess ? "Go to login" : status === "expired" || status === "invalid" ? "Request a new email" : "Back to login"}
             <ArrowRight className="size-4" />
           </Link>
         </Button>

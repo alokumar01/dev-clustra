@@ -52,7 +52,7 @@ const SearchConversation = ({
   onSelectUser,
 }) => {
   const searchResults = useChatStore((state) => state.searchResults);
-  const isUserOnline = useChatStore((state) => state.isUserOnline);
+  const onlineUsers = useChatStore((state) => state.onlineUsers);
   const results = normalizeResults(searchResults);
   const trimmedQuery = query.trim();
 
@@ -130,7 +130,7 @@ const SearchConversation = ({
         {results.map((user) => {
           const username = user?.username || 'Unknown user';
           const userId = user?._id || username;
-          const online = user?._id ? isUserOnline(user._id) : false;
+          const online = user?._id ? onlineUsers.has(user._id.toString()) : false;
 
           return (
             <Button

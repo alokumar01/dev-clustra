@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, CircleAlert, Loader2Icon, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { ArrowRight, CircleAlert, Loader2Icon, RefreshCw, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { acceptInvite, verifyInviteToken } from '@/app/services/invite.service';
@@ -10,19 +10,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { savePendingAction, clearPendingAction, getPendingAction } from '@/lib/pendingAction';
+import { logger } from '@/lib/logger';
 
 export default function InvitePage({ params }) {
     const { token } = use(params);
-    const pathname = usePathname();
     const router = useRouter();
 
-    const { isAuthenticated } = useAuthStore();
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const [inviter, setInviter] = useState(null);
     const [status, setStatus] = useState('verifying');
     const [errorMessage, setErrorMessage] = useState('');
     const [isAccepting, setIsAccepting] = useState(false);
+    const [joinedConversationId, setJoinedConversationId] = useState(null);
+    const [verificationAttempt, setVerificationAttempt] = useState(0);
+    const autoJoinAttempted = useRef(false);
 
-    const handleAcceptInvite = async () => {
+    const handleAcceptInvite = useCallback(async () => {
         if (!token) {
             setStatus('invalid');
             setErrorMessage('This invitation link is missing a valid token.');
@@ -31,8 +34,6 @@ export default function InvitePage({ params }) {
         }
 
         if (!isAuthenticated) {
-            console.info('[invite] Redirecting unauthenticated user to sign in', { token, pathname });
-            // sessionStorage.setItem('inviteToken', token);
             savePendingAction({
                 type: "JOIN_INVITE",
                 payload: {
@@ -40,35 +41,52 @@ export default function InvitePage({ params }) {
                 }
             })
             toast.info('Please sign in to continue.');
-            // router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-            router.push("/login")
+            router.push(`/login?redirect=${encodeURIComponent(`/invite/${token}`)}`);
             return;
         }
 
         setIsAccepting(true);
         try {
-            // console.info('[invite] Accepting invite request', { token });
             const response = await acceptInvite(token);
             const conversationId = response?.conversationId;
-            // clearPendingAction(); // remove the join state from session storage
-
-            if (conversationId) {
-                console.info('[invite] Invite accepted successfully', { token, conversationId });
-                toast.success('Invite accepted. Opening your chat now.');
-                router.push(`/chat?conversationId=${conversationId}`);
-            } else {
-                console.warn('[invite] Invite accepted without a conversation ID', { token, response });
-                toast.success('Invite accepted. You can open your chats from the dashboard.');
-                router.push('/chat');
+            clearInvitePendingAction(token);
+            setJoinedConversationId(conversationId || null);
+            setStatus('joined');
+            if (!conversationId) {
+                logger.warn('invite.accepted_without_conversation', {
+                    area: 'invite',
+                    operation: 'accept',
+                });
             }
+            toast.success('Invite accepted. Your conversation is ready.');
         } catch (error) {
             const message = error?.response?.data?.message || 'Unable to accept this invitation right now.';
-            console.error('[invite] Failed to accept invite', { token, error: message });
+            const errorCode = error?.response?.data?.code;
+            const httpStatus = error?.response?.status;
+            if (errorCode === 'INVITE_TOKEN_EXPIRED' || errorCode === 'INVITE_TOKEN_USED' || errorCode === 'INVITE_MISSING') {
+                setStatus(errorCode === 'INVITE_TOKEN_EXPIRED' ? 'expired' : 'used');
+                setErrorMessage(errorCode === 'INVITE_MISSING'
+                    ? 'This invite may already have been accepted or is no longer active. Ask the sender for a fresh link if you still need access.'
+                    : message);
+                clearInvitePendingAction(token);
+            } else if (httpStatus === 401 || httpStatus === 403 || errorCode === 'INVITE_LINK_UNAUTHORIZED') {
+                setStatus('unauthorized');
+                setErrorMessage('Sign in with an account that can accept this invitation, then try again.');
+            } else {
+                setStatus('join-error');
+                setErrorMessage(message);
+            }
+            logger.warn('invite.accept.failed', {
+                area: 'invite',
+                operation: 'accept',
+                status: httpStatus,
+                code: errorCode,
+            });
             toast.error(message);
         } finally {
             setIsAccepting(false);
         }
-    };
+    }, [isAuthenticated, router, token]);
 
     useEffect(() => {
         let isMounted = true;
@@ -82,7 +100,6 @@ export default function InvitePage({ params }) {
                 return;
             }
 
-            console.info('[invite] Verifying invite token', { token, pathname });
             try {
                 setStatus('verifying');
                 const response = await verifyInviteToken(token);
@@ -96,25 +113,52 @@ export default function InvitePage({ params }) {
                 } else {
                     setStatus('invalid');
                     setErrorMessage('This invitation link is no longer valid.');
+                    clearInvitePendingAction(token);
                 }
             } catch (error) {
                 if (!isMounted) return;
 
-                const statusCode = error?.response?.data?.status;
+                const statusCode = error?.response?.status;
                 const errorCode = error?.response?.data?.code;
                 const message = error?.response?.data?.message || 'This invitation could not be verified.';
 
                 if (statusCode === 410 || errorCode === 'INVITE_TOKEN_USED') {
                     setStatus('used');
                     setErrorMessage(message);
+                    clearInvitePendingAction(token);
                     toast.warning(message);
+                } else if (statusCode === 401 || statusCode === 403 || errorCode === 'INVITE_LINK_UNAUTHORIZED') {
+                    setStatus('unauthorized');
+                    setErrorMessage('This invitation needs an authorized account. Sign in and try again.');
+                } else if (errorCode === 'INVITE_TOKEN_EXPIRED') {
+                    setStatus('expired');
+                    setErrorMessage('This invitation has expired. Ask the sender to generate a new link.');
+                    clearInvitePendingAction(token);
+                } else if (!error.response || statusCode >= 500) {
+                    setStatus('verification-error');
+                    setErrorMessage('We could not reach the invite service. Check your connection and try again.');
                 } else {
                     setStatus('invalid');
-                    setErrorMessage(message);
+                    setErrorMessage(errorCode === 'INVITE_MISSING'
+                        ? 'This invitation link is invalid or no longer available.'
+                        : message);
+                    if (statusCode === 404 || statusCode === 400) clearInvitePendingAction(token);
                     toast.error(message);
                 }
 
-                console.error('[invite] Invite verification failed', { token, error: message });
+                logger.warn('invite.verification.failed', {
+                    area: 'invite',
+                    operation: 'verify',
+                    status: error.response?.status,
+                    code: errorCode,
+                });
+            }
+
+            function clearInvitePendingAction(token) {
+                const pendingAction = getPendingAction();
+                if (pendingAction?.type === 'JOIN_INVITE' && pendingAction.payload?.token === token) {
+                    clearPendingAction();
+                }
             }
         };
 
@@ -123,25 +167,24 @@ export default function InvitePage({ params }) {
         return () => {
             isMounted = false;
         };
-    }, [pathname, token]);
+    }, [token, verificationAttempt]);
 
     useEffect(() => {
-        // const pendingToken = sessionStorage.getItem('inviteToken');
         const pendingAction = getPendingAction();
 
         if (
             pendingAction &&
             pendingAction.type === "JOIN_INVITE" &&
             pendingAction.payload.token === token &&
-            isAuthenticated
+            isAuthenticated &&
+            status === 'ready' &&
+            !autoJoinAttempted.current
         ) {
-            console.info('[invite] Session restored. Finishing invite acceptance', { token });
-            // sessionStorage.removeItem('inviteToken');
-            clearPendingAction();
+            autoJoinAttempted.current = true;
             toast.success('Welcome back! Completing your invitation...');
             handleAcceptInvite();
         }
-    }, [isAuthenticated, token]);
+    }, [handleAcceptInvite, isAuthenticated, status, token]);
 
     const renderState = () => {
         if (status === 'verifying') {
@@ -160,6 +203,26 @@ export default function InvitePage({ params }) {
             );
         }
 
+        if (status === 'joined') {
+            return (
+                <Card className="w-full max-w-xl border-emerald-500/30 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                            <ShieldCheck className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">You’re in</CardTitle>
+                            <CardDescription>Your invitation was accepted. The private conversation is ready.</CardDescription>
+                        </div>
+                        <Button onClick={() => router.push(joinedConversationId ? `/chat?conversationId=${joinedConversationId}` : '/chat')} className="w-full sm:w-auto">
+                            Open conversation
+                            <ArrowRight className="size-4" />
+                        </Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
         if (status === 'used') {
             return (
                 <Card className="w-full max-w-xl border-amber-400/50 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
@@ -168,12 +231,82 @@ export default function InvitePage({ params }) {
                             <CircleAlert className="size-7" />
                         </div>
                         <div className="space-y-2">
-                            <CardTitle className="text-xl">This invite has already been used</CardTitle>
-                            <CardDescription>This link is no longer active. Ask the sender for a fresh invitation if you still need access.</CardDescription>
+                            <CardTitle className="text-xl">This invite was already used or is no longer active</CardTitle>
+                            <CardDescription>{errorMessage || 'It may already have been accepted. Ask the sender for a fresh invitation if you still need to join.'}</CardDescription>
                         </div>
-                        <Button onClick={() => router.push('/')} className="w-full sm:w-auto">
+                        <Button onClick={() => router.push('/chat')} className="w-full sm:w-auto">
+                            Open your chats
+                        </Button>
+                        <Button variant="outline" onClick={() => router.push('/')} className="w-full sm:w-auto">
                             Back to home
                         </Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        if (status === 'expired') {
+            return (
+                <Card className="w-full max-w-xl border-amber-400/50 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+                            <CircleAlert className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">This invite has expired</CardTitle>
+                            <CardDescription>{errorMessage || 'Ask the sender to generate and share a new invite link.'}</CardDescription>
+                        </div>
+                        <Button onClick={() => router.push('/')} className="w-full sm:w-auto">Back to home</Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        if (status === 'unauthorized') {
+            return (
+                <Card className="w-full max-w-xl border-border/70 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <ShieldCheck className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">Sign in to join this conversation</CardTitle>
+                            <CardDescription>{errorMessage || 'Your invite will be saved so you can continue after signing in.'}</CardDescription>
+                        </div>
+                        <Button onClick={() => {
+                            savePendingAction({ type: 'JOIN_INVITE', payload: { token } });
+                            router.push(`/login?redirect=${encodeURIComponent(`/invite/${token}`)}`);
+                        }} className="w-full sm:w-auto">Sign in to continue</Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        if (status === 'verification-error' || status === 'join-error') {
+            return (
+                <Card className="w-full max-w-xl border-destructive/30 bg-card/90 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+                    <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-10">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                            <CircleAlert className="size-7" />
+                        </div>
+                        <div className="space-y-2">
+                            <CardTitle className="text-xl">{status === 'join-error' ? 'Could not join yet' : 'Could not verify this invite'}</CardTitle>
+                            <CardDescription>{errorMessage}</CardDescription>
+                        </div>
+                        {status === 'join-error' ? (
+                            <Button onClick={handleAcceptInvite} disabled={isAccepting} className="w-full sm:w-auto">
+                                {isAccepting ? <Loader2Icon className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                                Try joining again
+                            </Button>
+                        ) : (
+                            <Button onClick={() => {
+                                setStatus('verifying');
+                                setVerificationAttempt((attempt) => attempt + 1);
+                            }} className="w-full sm:w-auto">
+                                <RefreshCw className="size-4" />
+                                Try again
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
             );
@@ -188,7 +321,7 @@ export default function InvitePage({ params }) {
                         </div>
                         <div className="space-y-2">
                             <CardTitle className="text-xl">Invitation unavailable</CardTitle>
-                            <CardDescription>{errorMessage || 'This link appears to be broken or expired. Please request a new one.'}</CardDescription>
+                            <CardDescription>{errorMessage || 'This link appears to be broken. Please request a new one.'}</CardDescription>
                         </div>
                         <Button onClick={() => router.push('/')} className="w-full sm:w-auto">
                             Back to home

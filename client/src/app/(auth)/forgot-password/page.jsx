@@ -23,10 +23,12 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
     setLoading(true);
+    setErrorMessage("");
 
     try {
       const response = await forgotPassword(email);
@@ -42,10 +44,10 @@ export default function ForgotPassword() {
         router.push("/login");
       }, 1800);
     } catch (submitError) {
-      toast.error(
-        submitError?.response?.data?.message ||
-          "Unable to send the reset link. Please try again.",
-      );
+      const error = submitError?.response?.data?.message ||
+        "Unable to send the reset link. Please check your connection and try again.";
+      setErrorMessage(error);
+      toast.error(error);
     } finally {
       setLoading(false);
     }
@@ -88,6 +90,11 @@ export default function ForgotPassword() {
     >
       {!submitted ? (
         <form onSubmit={handleSubmit} className="space-y-5">
+          {errorMessage && (
+            <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm leading-6 text-destructive">
+              {errorMessage}
+            </p>
+          )}
           <FieldSet>
             <FieldGroup className="gap-4">
               <Field>
@@ -107,7 +114,7 @@ export default function ForgotPassword() {
           </FieldSet>
 
           <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl text-sm font-semibold cursor-pointer">
-            {loading ? <Spinner /> : "Send reset link"}
+            {loading ? <Spinner /> : errorMessage ? "Try again" : "Send reset link"}
             <ArrowRight className="size-4" />
           </Button>
         </form>

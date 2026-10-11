@@ -1,27 +1,78 @@
 'use client'
 
 import { useAuthStore } from "@/store/authStore";
-import { socket } from "@/store/socketStore";
+import { socket, useSocketStore } from "@/store/socketStore";
 import { useChatStore } from "@/store/chatStore";
 import { useEffect } from "react";
-import { MarkAsRead } from "@/app/services/conversation.service";
+import { markAsRead } from "@/app/services/conversation.service";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 export default function SocketProvider({ children }) {
     const user = useAuthStore((state) => state.user);
-    // console.log("from socket provider:", user);
-
     // Online user event management Multiple users online then send the list of online users to newly connected clients
     useEffect(() => {
         const handleOnlineUsers = (users) => {
             useChatStore.getState().setOnlineUsers(users);
         }
 
-        // listen for online users event
+        const setConnectionStatus = useSocketStore.getState().setConnectionStatus;
+        const handleConnect = () => {
+            setConnectionStatus("connected");
+            const conversationId = useChatStore.getState().selectedChat?._id;
+            if (conversationId) {
+                socket.emit("join_conversation", conversationId);
+            }
+        };
+        const handleDisconnect = (reason) => {
+            useChatStore.getState().clearPresence();
+            if (typeof navigator !== "undefined" && !navigator.onLine) {
+                setConnectionStatus("offline");
+            } else {
+                setConnectionStatus(reason === "io client disconnect" ? "offline" : "reconnecting");
+            }
+        };
+        const handleConnectError = (error) => {
+            setConnectionStatus(socket.active ? "reconnecting" : "failed");
+            logger.error(
+                "socket.chat.connection_failed",
+                { area: "chat_socket" },
+                error,
+            );
+        };
+        const handleReconnectAttempt = () => setConnectionStatus("reconnecting");
+        const handleReconnectFailed = () => setConnectionStatus("failed");
+        const handleOffline = () => {
+            setConnectionStatus("offline");
+            useChatStore.getState().clearPresence();
+        };
+        const handleOnline = () => {
+            if (socket.connected) {
+                setConnectionStatus("connected");
+            } else if (useAuthStore.getState().user?._id) {
+                setConnectionStatus("reconnecting");
+                socket.connect();
+            }
+        };
+
+        socket.on("connect", handleConnect);
+        socket.on("disconnect", handleDisconnect);
         socket.on("online_users", handleOnlineUsers);
+        socket.on("connect_error", handleConnectError);
+        socket.io.on("reconnect_attempt", handleReconnectAttempt);
+        socket.io.on("reconnect_failed", handleReconnectFailed);
+        window.addEventListener("offline", handleOffline);
+        window.addEventListener("online", handleOnline);
 
         return () => {
+            socket.off("connect", handleConnect);
+            socket.off("disconnect", handleDisconnect);
             socket.off("online_users", handleOnlineUsers);
+            socket.off("connect_error", handleConnectError);
+            socket.io.off("reconnect_attempt", handleReconnectAttempt);
+            socket.io.off("reconnect_failed", handleReconnectFailed);
+            window.removeEventListener("offline", handleOffline);
+            window.removeEventListener("online", handleOnline);
         }
     }, []);
 
@@ -36,6 +87,7 @@ export default function SocketProvider({ children }) {
 
         const handleUserOffline = ({ userId}) => {
             chatStore.removeOnlineUser(userId);
+            chatStore.clearTypingForUser(userId);
         }
 
         socket.on("user_online", handleUserOnline);
@@ -50,12 +102,16 @@ export default function SocketProvider({ children }) {
     // Socket connection management
     useEffect(() => {
         if (!user?._id) {
+            useSocketStore.getState().setConnectionStatus("offline");
             socket.disconnect();
             return;
         }
 
+        useSocketStore.getState().setConnectionStatus("connecting");
         if (!socket.connected) {
             socket.connect();
+        } else {
+            useSocketStore.getState().setConnectionStatus("connected");
         }
 
         return () => {
@@ -69,12 +125,12 @@ export default function SocketProvider({ children }) {
 
         const handleNewMessage = async (msg) => {
             // Ignore messages from self (already handled by optimistic UI)
-            if (msg.senderId === user._id) return;
+            if (msg.senderId?.toString() === user._id?.toString()) return;
 
             // Get fresh state to determine if this chat is active
             const state = useChatStore.getState();
             const activeId = state.selectedChat?._id;
-            const isActive = msg.conversationId === activeId;
+            const isActive = msg.conversationId?.toString() === activeId?.toString();
 
             // Handle incoming message with guaranteed current state
             state.handleIncomingMessage(msg, isActive);
@@ -83,7 +139,15 @@ export default function SocketProvider({ children }) {
             if (isActive) {
                 state.appendMessageToConversation(msg.conversationId, msg);
 
-                await MarkAsRead(msg.conversationId);
+                try {
+                    await markAsRead(msg.conversationId);
+                } catch (error) {
+                    logger.warn("socket.chat.mark_read_failed", {
+                        area: "chat_socket",
+                        operation: "mark_read",
+                        code: error.code,
+                    });
+                }
             }
         };
 
@@ -110,7 +174,6 @@ export default function SocketProvider({ children }) {
                 data.readTime
             )
 
-            // await MarkAsRead(msg.conversationId); testing here
         }
 
         socket.on("message_read", handleMessageRead);
@@ -128,8 +191,6 @@ export default function SocketProvider({ children }) {
         const InviteConversation = (data) => {
             const chatStore = useChatStore.getState();
             chatStore.appendInviteConversation(data)
-            // console.log("data from socker provider append conve: ", data);
-
            toast.success(`${data.chatWith.username} accepted your invite. Say hi! 👋`);
         }
 

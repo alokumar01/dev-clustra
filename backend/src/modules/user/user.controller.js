@@ -1,30 +1,21 @@
-import { v2 as cloudinary } from "cloudinary";
 import ApiError from "../../helpers/apiError.js";
-import User from "../user/user.model.js";
-import { checkUsernameService, searchUsersService } from "./user.service.js";
+import {
+    checkUsernameService,
+    searchUsersService,
+    updateAvatarService,
+} from "./user.service.js";
 
 export const updateAvatarController = async (req, res, next) => {
     try {
-        //checking the middleware getting url or not
         if (!req.file || !req.file.cloudinaryUrl) {
             throw new ApiError(400, "No image uploaded");
         }
 
-        //to delte the image we need to find the user as well
-        //NOTE, do not implemtned business logic here send this part into services,
-        //TODO:send this into businness logic into services
-        const user = await User.findById(req.user._id);
-
-        const oldPublicId = user.avatarPublicId;
-
-        //update the user
-        user.avatar = req.file.cloudinaryUrl;
-        user.avatarPublicId = req.file.cloudinaryId
-        await user.save();
-
-        if (oldPublicId) {
-            await cloudinary.uploader.destroy(oldPublicId);
-        }
+        await updateAvatarService({
+            userId: req.user._id,
+            avatarUrl: req.file.cloudinaryUrl,
+            avatarPublicId: req.file.cloudinaryId,
+        });
 
         res.status(200).json({
             success: true,
@@ -66,7 +57,6 @@ export const searchUsersController = async (req, res, next) => {
 export const checkUsernameController = async (req, res, next) => {
     try {
         const { username } = req.validatedData;
-        console.log(username);
 
         const { available } = await checkUsernameService(username);
 
@@ -80,4 +70,3 @@ export const checkUsernameController = async (req, res, next) => {
         next(error);
     }
 }
-

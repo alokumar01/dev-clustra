@@ -28,6 +28,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const passwordsDoNotMatch =
     confirmPassword.length > 0 && password !== confirmPassword;
@@ -42,10 +43,11 @@ export default function ResetPassword() {
     }
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match.");
+      setErrorMessage("Passwords do not match.");
       return;
     }
 
+    setErrorMessage("");
     setLoading(true);
 
     try {
@@ -53,10 +55,10 @@ export default function ResetPassword() {
       toast.success(response?.message || "Password reset successfully.");
       router.push("/login");
     } catch (submitError) {
-      toast.error(
-        submitError.response?.data?.message ||
-          "Unable to reset your password. Request a new link and try again.",
-      );
+      const message = submitError.response?.data?.message ||
+        "Unable to reset your password. Request a new link and try again.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -104,6 +106,17 @@ export default function ResetPassword() {
           </FieldGroup>
         </FieldSet>
 
+        {errorMessage && (
+          <FieldError role="alert" className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 leading-6">
+            {errorMessage}{" "}
+            {(submitExpiredMessage(errorMessage)) && (
+              <Link href="/forgot-password" className="font-medium underline underline-offset-4">
+                Request a new reset link.
+              </Link>
+            )}
+          </FieldError>
+        )}
+
         {tokenMissing && (
           <FieldError className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 leading-6">
             Reset token is missing.{" "}
@@ -124,4 +137,8 @@ export default function ResetPassword() {
       </form>
     </AuthShell>
   );
+}
+
+function submitExpiredMessage(message) {
+  return /expired|invalid.*token|token.*invalid/i.test(message);
 }

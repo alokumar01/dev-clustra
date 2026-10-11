@@ -15,28 +15,29 @@ export const useChatStore = create((set, get) => ({
   // NEW: online users
   onlineUsers: new Set(),
 
-  // console.log("messageByconversation from useChatStore:", messagesByConversation)
   setOnlineUsers: (users) =>
     set({
-      onlineUsers: new Set(users)
+      onlineUsers: new Set(users.map((userId) => userId?.toString()).filter(Boolean))
     }),
+
+  clearPresence: () => set({ onlineUsers: new Set(), typingUsers: new Map() }),
 
   addOnlineUser: (userId) =>
     set((state) => {
       const updated = new Set(state.onlineUsers);
-      updated.add(userId);
+      if (userId) updated.add(userId.toString());
       return { onlineUsers: updated };
     }),
 
   removeOnlineUser: (userId) =>
     set((state) => {
       const updated = new Set(state.onlineUsers);
-      updated.delete(userId);
+      if (userId) updated.delete(userId.toString());
       return { onlineUsers: updated };
     }),
 
   isUserOnline: (userId) => {
-    return get().onlineUsers.has(userId);
+    return get().onlineUsers.has(userId?.toString());
   },
 
   setConversations: (conversations) => set({ conversations }),
@@ -63,6 +64,23 @@ export const useChatStore = create((set, get) => ({
         },
       };
   }),
+
+  updateMessageInConversation: (conversationId, messageId, patch) =>
+    set((state) => {
+      const messages = state.messagesByConversation[conversationId] || [];
+      const updatedMessages = messages.map((message) =>
+        message._id === messageId ? { ...message, ...patch } : message
+      );
+      if (updatedMessages.every((message, index) => message === messages[index])) {
+        return {};
+      }
+      return {
+        messagesByConversation: {
+          ...state.messagesByConversation,
+          [conversationId]: updatedMessages,
+        },
+      };
+    }),
 
   // older message ho prepend karo with correct
   prependMessagesToConversation: (conversationId, olderMessages) => {
@@ -101,7 +119,6 @@ export const useChatStore = create((set, get) => ({
 
   markConversationRead: (conversationId) =>
     set((state) => ({
-      // console.log("marking conversation read for:", conversationId),
       conversations: state.conversations.map((c) =>
         c._id === conversationId ? { ...c, unreadCount: 0 } : c
       ),
@@ -112,7 +129,7 @@ export const useChatStore = create((set, get) => ({
     set((state) => {
       const messages = state.messagesByConversation[conversationId] || [];
       const updatedMessages = messages.map((msg) => {
-        if (msg.senderId !== readerId && !msg.readAt) {
+        if (msg.senderId?.toString() !== readerId?.toString() && !msg.readAt) {
           return { ...msg, readAt: readTime };
         }
         return msg;
@@ -143,7 +160,7 @@ export const useChatStore = create((set, get) => ({
     set((state) => {
       // Find conversation inside state update (guaranteed current data)
       const conversationIndex = state.conversations.findIndex(
-        (c) => c._id === msg.conversationId
+        (c) => c._id?.toString() === msg.conversationId?.toString()
       );
 
       if (conversationIndex === -1) return {}; // Conversation not found
@@ -169,17 +186,6 @@ export const useChatStore = create((set, get) => ({
       return { conversations: updatedConversations };
     }),
 
-    // Set typing status for a conversation
-  // setTypingStatus: (conversationId, isTyping) =>
-  //   set((state) => {
-  //     const updatedConversation = state.conversations.map((conversation) =>
-  //       conversation._id === conversationId
-  //         ? { ...conversation, isTyping }
-  //         : conversation
-  //     );
-  //     return { conversations: updatedConversation };
-  //   })
-
   typingUsers: new Map(),
 
   setTypingUser: (conversationId, userId) => {
@@ -200,6 +206,21 @@ export const useChatStore = create((set, get) => ({
       const typingUsers = new Map(state.typingUsers);
       typingUsers.delete(conversationId.toString());
       
+      return { typingUsers };
+    });
+  },
+
+  clearTypingForUser: (userId) => {
+    if (!userId) return;
+
+    set((state) => {
+      const typingUsers = new Map(state.typingUsers);
+      const normalizedUserId = userId.toString();
+      for (const [conversationId, typingUserId] of typingUsers) {
+        if (typingUserId?.toString() === normalizedUserId) {
+          typingUsers.delete(conversationId);
+        }
+      }
       return { typingUsers };
     });
   },

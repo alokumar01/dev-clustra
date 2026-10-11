@@ -1,59 +1,29 @@
 import { api } from "@/lib/api/axios";
 
-// FETCH ALL CONVERSATIONS
-export async function FetchAllConversations() {
-    try {
-
-        const response = await api.get("/conversations");
-
-        return response.data;
-
-    } catch (error) {
-        throw error;
-    }
+export async function fetchAllConversations() {
+    const response = await api.get("/conversations");
+    return response.data;
 }
 
-// FETCH SINGLE CONVERSATION WITH MESSAGES
-export async function FetchSingleChatConversation(
-        conversationId,
-        { before, limit } = {}
-    ) {
-    try {
-
-        const response = await api.get(`/conversations/${conversationId}/messages`, {
-            params: {
-                before,
-                limit
-            }
-        });
-        // console.group("Fetched single chat conversation:", response.data);
-
-        return response.data;
-
-    } catch (error) {
-        throw error;
-    }
+export async function fetchSingleChatConversation(
+    conversationId,
+    { before, limit } = {}
+) {
+    const response = await api.get(`/conversations/${conversationId}/messages`, {
+        params: {
+            before,
+            limit
+        }
+    });
+    return response.data;
 }
 
-// MARK AS READ AND RESET UNREAD COUNT
-export async function MarkAsRead(conversationId) {
-    try {
-
-        const response = await api.post(`/conversations/${conversationId}/read`);
-
-        return response.data;
-
-    } catch (error) {
-        throw error;
-    }
+export async function markAsRead(conversationId) {
+    const response = await api.post(`/conversations/${conversationId}/read`);
+    return response.data;
 }
 
-// SEND MESSAGES
-export async function SendMessage(data) {
-    try {
-        const response = await api.post("/messages", data);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
+export async function sendMessage(data) {
+    const response = await api.post("/messages", data);
+    return response.data;
 }

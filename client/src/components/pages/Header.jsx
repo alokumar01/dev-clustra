@@ -3,27 +3,26 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { ArrowRight, Boxes, ExternalLink, Menu, Moon, Sun, X } from "lucide-react"
+import { ArrowRight, Boxes, Menu, Moon, Sun, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const links = [
-  { label: "Why", href: "#why" },
+  { label: "Conversations", href: "#conversations" },
   { label: "Features", href: "#features" },
+  { label: "Temporary chat", href: "#ephemeral" },
   { label: "Architecture", href: "#architecture" },
-  { label: "Temp Chat", href: "/session", external: true },
-  // { label: "Stack", href: "#stack" },
-  // { label: "GitHub", href: "https://github.com", external: true },
+  { label: "Temp Chat", href: "/session" },
 ]
 
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-      <span className="flex size-9 items-center justify-center rounded-xl border border-border bg-background text-blue-600 shadow-sm dark:bg-secondary/70">
+      <span className="flex size-9 items-center justify-center rounded-xl border border-border/70 bg-background/70 text-blue-600 backdrop-blur-md dark:bg-secondary/50">
         <Boxes className="size-4" aria-hidden="true" />
       </span>
-      <span className="text-base font-semibold tracking-normal text-foreground">DevClustra</span>
+      <span className="text-base font-semibold tracking-normal text-foreground">Dev-Clustra</span>
     </Link>
   )
 }
@@ -31,30 +30,16 @@ function Logo() {
 function NavLinks({ onNavigate, className }) {
   return (
     <div className={cn("flex items-center gap-8", className)}>
-      {links.map((link) =>
-        link.external ? (
-          <a
-            key={link.label}
-            href={link.href}
-            target="_blank"
-            rel="noreferrer"
-            onClick={onNavigate}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            {link.label}
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-          </a>
-        ) : (
-          <a
-            key={link.label}
-            href={link.href}
-            onClick={onNavigate}
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            {link.label}
-          </a>
-        )
-      )}
+      {links.map((link) => (
+        <a
+          key={link.label}
+          href={link.href}
+          onClick={onNavigate}
+          className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {link.label}
+        </a>
+      ))}
     </div>
   )
 }
@@ -129,11 +114,10 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40">
+    <header className={cn("fixed inset-x-0 top-0 z-40", scrolled && "border-b border-border/60 bg-background/70 backdrop-blur-xl")}>
       <nav
         className={cn(
-          "mx-auto mt-4 flex h-16 max-w-7xl items-center justify-between rounded-2xl border border-border/80 bg-background/80 px-4 shadow-sm backdrop-blur-xl transition-all duration-200 lg:px-6",
-          scrolled && "max-w-6xl bg-background/90"
+          "mx-auto flex h-20 max-w-7xl items-center justify-between px-4 lg:px-8"
         )}
         aria-label="Primary navigation"
       >

@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 
 import {
-  JoinSession,
-  VerifySesssion,
-} from "@/app/services/service.session";
+  joinSession,
+  verifySessionCode,
+} from "@/app/services/session.service";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,6 +38,9 @@ export default function SessionJoin({ params }) {
   const [status, setStatus] = useState("verifying");
   const [displayName, setDisplayName] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [verificationAttempt, setVerificationAttempt] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [joinError, setJoinError] = useState("");
   const [session, setSession] = useState(null);
   const [joinedSession, setJoinedSession] = useState(null);
 
@@ -53,10 +56,10 @@ export default function SessionJoin({ params }) {
 
       try {
         setStatus("verifying");
+        setErrorMessage("");
 
         // VERIFY SEESION CODE EXIST AND IS ACTIVE
-        const response = await VerifySesssion(code);
-        // console.log("response: ", response)
+        const response = await verifySessionCode(code);
         if (!isMounted) return;
 
         if (!response?.data) {
@@ -91,12 +94,24 @@ export default function SessionJoin({ params }) {
       } catch (error) {
         if (!isMounted) return;
 
-        setStatus("invalid");
+        const errorCode = error?.response?.data?.code;
+        if (errorCode === "SESSION_EXPIRED") {
+          setStatus("expired");
+          return;
+        }
+        if (errorCode === "SESSION_CLOSED") {
+          setStatus("inactive");
+          return;
+        }
 
-        toast.error(
-          error?.response?.data?.message ||
-            "Unable to verify this session."
-        );
+        const message = error?.response?.data?.message;
+        if (!error.response || error.response.status >= 500) {
+          setStatus(typeof navigator !== "undefined" && !navigator.onLine ? "offline" : "verification-error");
+          setErrorMessage(message || "Could not reach the session service. Check your connection and try again.");
+        } else {
+          setStatus("invalid");
+          setErrorMessage(message || "This session link is invalid or can't be verified anymore.");
+        }
       }
     }
 
@@ -105,13 +120,14 @@ export default function SessionJoin({ params }) {
     return () => {
       isMounted = false;
     };
-  }, [code]);
+  }, [code, verificationAttempt]);
 
   // JOIN SESSION
   async function handleAcceptSession(event) {
     event?.preventDefault();
 
     if (!code || isJoining) return;
+    setJoinError("");
 
     const name =
       displayName.trim() ||
@@ -121,7 +137,7 @@ export default function SessionJoin({ params }) {
       setIsJoining(true);
       setStatus("joining");
 
-      const response = await JoinSession(code, name);
+      const response = await joinSession(code, name);
 
       if (!response?.success || !response?.data) {
         throw new Error(
@@ -144,12 +160,9 @@ export default function SessionJoin({ params }) {
       setStatus("joined");
     } catch (error) {
       setStatus("ready");
-
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to join the session."
-      );
+      const message = error?.response?.data?.message || error?.message || "Unable to join the session.";
+      setJoinError(message);
+      toast.error(message);
     } finally {
       setIsJoining(false);
     }
@@ -192,11 +205,31 @@ export default function SessionJoin({ params }) {
         icon={<CircleAlert className="size-6" />}
         tone="danger"
         title="Session unavailable"
-        description="This session link is invalid or can't be verified anymore."
+        description={errorMessage || "This session link is invalid or can't be verified anymore."}
         action={
           <Button variant="outline" className="mt-6 rounded-lg" onClick={() => router.push("/session")}>
             Back to sessions
           </Button>
+        }
+      />
+    );
+  }
+
+  if (status === "offline" || status === "verification-error") {
+    return (
+      <CenteredSessionState
+        icon={<CircleAlert className="size-6" />}
+        title={status === "offline" ? "You’re offline" : "Could not check this session"}
+        description={errorMessage || "Check your connection and try again."}
+        action={
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <Button onClick={() => setVerificationAttempt((attempt) => attempt + 1)}>
+              Try again
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/session")}>
+              Back to sessions
+            </Button>
+          </div>
         }
       />
     );
@@ -208,6 +241,22 @@ export default function SessionJoin({ params }) {
         icon={<CircleAlert className="size-6" />}
         title="Session ended"
         description="This temporary chat is no longer active."
+        action={
+          <Button variant="outline" className="mt-6 rounded-lg" onClick={() => router.push("/session")}>
+            Back to sessions
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (status === "expired") {
+    return (
+      <CenteredSessionState
+        icon={<CircleAlert className="size-6" />}
+        tone="danger"
+        title="Session expired"
+        description="This temporary chat has expired and can no longer be joined."
         action={
           <Button variant="outline" className="mt-6 rounded-lg" onClick={() => router.push("/session")}>
             Back to sessions
@@ -230,13 +279,13 @@ export default function SessionJoin({ params }) {
   return (
     <SessionShell>
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md rounded-lg border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-zinc-950">
+        <Card className="w-full max-w-md rounded-2xl border-border/80 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
           <CardHeader className="px-6 pb-2 pt-8 text-center sm:px-8">
-            <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-white/5 dark:text-white">
+            <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <MessageCircle className="size-6" />
             </div>
 
-            <CardTitle className="text-2xl font-semibold tracking-normal text-zinc-950 dark:text-white">
+            <CardTitle className="text-2xl font-semibold tracking-tight text-card-foreground">
               Join Temp Chat
             </CardTitle>
 
@@ -247,6 +296,11 @@ export default function SessionJoin({ params }) {
 
           <CardContent className="px-6 pb-8 pt-6 sm:px-8">
             <form onSubmit={handleAcceptSession} className="space-y-5">
+              {joinError && (
+                <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm leading-6 text-destructive">
+                  {joinError}
+                </p>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="display-name">Display name</Label>
 
@@ -261,7 +315,7 @@ export default function SessionJoin({ params }) {
                   autoComplete="nickname"
                   autoFocus
                   disabled={isJoining}
-                  className="h-11 rounded-lg border-zinc-200 bg-white dark:border-white/10 dark:bg-zinc-900"
+                  className="h-11 rounded-xl bg-background"
                 />
 
                 <p className="text-xs leading-5 text-muted-foreground">
@@ -271,10 +325,10 @@ export default function SessionJoin({ params }) {
 
               <Button
                 type="submit"
-                className="h-11 w-full rounded-lg bg-blue-600 text-white hover:bg-blue-700 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                className="h-11 w-full rounded-xl"
                 disabled={isJoining}
               >
-                Join Chat
+                {isJoining ? "Joining..." : joinError ? "Try joining again" : "Join Chat"}
                 <ArrowRight className="size-4" />
               </Button>
             </form>
@@ -300,13 +354,13 @@ function CenteredSessionState({
   return (
     <SessionShell>
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md rounded-lg border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-zinc-950">
+        <Card className="w-full max-w-md rounded-2xl border-border/80 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
           <CardContent className="flex flex-col items-center px-6 py-12 text-center">
-            <div className={tone === "danger" ? "mb-5 flex size-12 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300" : "mb-5 flex size-12 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-white/5 dark:text-white"}>
+            <div className={tone === "danger" ? "mb-5 flex size-12 items-center justify-center rounded-xl bg-destructive/10 text-destructive" : "mb-5 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary"}>
               {icon}
             </div>
 
-            <CardTitle className="text-xl text-zinc-950 dark:text-white">
+            <CardTitle className="text-xl text-card-foreground">
               {title}
             </CardTitle>
 
