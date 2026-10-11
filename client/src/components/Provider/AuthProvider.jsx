@@ -1,68 +1,30 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { Spinner } from '@/components/ui/spinner';
+import AppLoadingScreen from '../AppLoadingScreen';
 
 export default function AuthProvider({ children }) {
-    // const router = useRouter();
-    // const pathname = usePathname();
-
-    const {
-        getMe,
-        isAuthenticated,
-        isLoading,
-    } = useAuthStore();
+    const getMe = useAuthStore((state) => state.getMe);
+    const isLoading = useAuthStore((state) => state.isLoading);
 
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
-        const init = async () => {
-            await getMe();
+        let isMounted = true;
 
-            setReady(true);
+        getMe().finally(() => {
+            if (isMounted) setReady(true);
+        });
+
+        return () => {
+            isMounted = false;
         };
-
-        init();
-    }, []);
-
-    // useEffect(() => {
-    //     if (!ready || isLoading) return;
-
-    //     const protectedRoutes = [
-    //         "/chat",
-    //         "/dashboard",
-    //         "/profile",
-    //         "/settings",
-    //     ];
-
-    //     const publicRoutes = [
-    //         "/login",
-    //         "/signup",
-    //         "/forgot-password",
-    //     ]
-
-    //     const isProtected = protectedRoutes.some(route =>
-    //         pathname.startsWith(route)
-    //     );
-
-    //     const isPublicRoute = publicRoutes.some(route =>
-    //         pathname.startsWith(route)
-    //     );
-
-    //     if (isAuthenticated && isPublicRoute) {
-    //         router.replace("/chat");
-    //     }
-
-    //     if (!isAuthenticated && isProtected) {
-    //         router.replace(
-    //             `/login?redirect=${encodeURIComponent(pathname)}`
-    //         );
-    //     }
-    // }, [ready, isLoading, isAuthenticated, pathname, router]);
+    }, [getMe]);
 
     if (!ready || isLoading) {
-        return null;
+        return <AppLoadingScreen />
     }
 
     return children;

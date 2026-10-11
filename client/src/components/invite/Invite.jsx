@@ -1,24 +1,39 @@
 import { generateInviteToken } from "@/app/services/invite.service";
-import { Check, Copy, Link2, Loader2, MailPlus, RefreshCw, ShieldCheck } from "lucide-react";
+import { Check, Copy, Link2, Loader2, MailPlus, RefreshCw, Share2, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { Button } from "../ui/button";
 
 export default function InviteView() {
     const [loading, setLoading] = useState(false);
     const [inviteToken, setInviteToken] = useState(null);
     const [copied, setCopied] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [isSharing, setIsSharing] = useState(false);
 
     const handleGenerateInvite = async () => {
         setLoading(true);
         setCopied(false);
+        setErrorMessage("");
 
         try {
             const res = await generateInviteToken();
+            if (!res?.data?.fullUrl) {
+                throw new Error("Invite service returned no link");
+            }
             setInviteToken(res.data);
             toast.success("Invite link generated successfully");
         } catch (error) {
-            toast.error(error?.response?.data?.message || "Unable to generate invite link");
+            const message = error?.response?.data?.message || "Unable to generate invite link. Check your connection and try again.";
+            logger.warn("invite.generate.failed", {
+                area: "invite",
+                operation: "generate",
+                status: error?.response?.status,
+                code: error?.response?.data?.code,
+            });
+            setErrorMessage(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -30,11 +45,38 @@ export default function InviteView() {
         }
 
         try {
+            setErrorMessage("");
             await navigator.clipboard.writeText(inviteToken.fullUrl);
             setCopied(true);
             toast.success("Invite link copied to clipboard");
-        } catch (error) {
+        } catch {
+            setErrorMessage("Could not copy the link automatically. Open the link and copy it from the address bar.");
             toast.error("Failed to copy invite link");
+        }
+    };
+
+    const handleShareLink = async () => {
+        if (!inviteToken?.fullUrl) return;
+        if (!navigator.share) {
+            await handleCopyLink();
+            return;
+        }
+
+        setIsSharing(true);
+        setErrorMessage("");
+        try {
+            await navigator.share({
+                title: "Join me on DevClustra",
+                text: "Use this invite link to start a private conversation with me.",
+                url: inviteToken.fullUrl,
+            });
+        } catch (error) {
+            if (error?.name !== "AbortError") {
+                setErrorMessage("Could not share the invite. You can copy the link instead.");
+                toast.error("Could not share the invite");
+            }
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -75,6 +117,11 @@ export default function InviteView() {
                 </div>
 
                 <div className="space-y-4 p-5 sm:p-6">
+                    {errorMessage && (
+                        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm leading-6 text-destructive">
+                            {errorMessage}
+                        </p>
+                    )}
                     <div className="rounded-xl border border-border bg-secondary/35 p-4">
                         <div className="flex items-start gap-3">
                             <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-background text-blue-600 ring-1 ring-border">
@@ -106,25 +153,38 @@ export default function InviteView() {
                                         href={inviteToken.fullUrl}
                                         target="_blank"
                                         rel="noreferrer"
+                                        aria-label="Open invite link in a new tab"
                                         title={inviteToken.fullUrl}
                                         className="mt-2 block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-lg border border-border bg-secondary/50 px-3 py-2 font-mono text-sm text-foreground outline-none transition hover:border-blue-600/40 focus-visible:border-blue-600 focus-visible:ring-3 focus-visible:ring-blue-600/20"
                                     >
                                         {inviteToken.fullUrl}
                                     </a>
                                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                                        Long links are shortened on screen, but the full URL is copied.
+                                        This link is valid for up to 3 days. Long links are shortened on screen.
                                     </p>
                                 </div>
 
-                                <Button
-                                    variant={copied ? "secondary" : "default"}
-                                    size="lg"
-                                    className="h-10 w-full gap-2 rounded-xl sm:w-auto cursor-pointer"
-                                    onClick={handleCopyLink}
-                                >
-                                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-                                    {copied ? "Copied" : "Copy link"}
-                                </Button>
+                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                                    <Button
+                                        variant={copied ? "secondary" : "default"}
+                                        size="lg"
+                                        className="h-10 w-full gap-2 rounded-xl sm:w-auto"
+                                        onClick={handleCopyLink}
+                                    >
+                                        {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                                        {copied ? "Copied" : "Copy link"}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="h-10 w-full gap-2 rounded-xl sm:w-auto"
+                                        onClick={handleShareLink}
+                                        disabled={isSharing}
+                                    >
+                                        {isSharing ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />}
+                                        {isSharing ? "Sharing" : "Share"}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}

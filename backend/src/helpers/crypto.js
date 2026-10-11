@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { customAlphabet, nanoid, urlAlphabet } from 'nanoid';
+import { customAlphabet } from 'nanoid';
 
 export function generateEmailToken() {
   const emailToken = crypto.randomBytes(32).toString('hex');

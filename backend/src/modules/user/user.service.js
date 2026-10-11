@@ -1,5 +1,23 @@
 import Conversation from "../conversation/conversation.model.js";
+import { v2 as cloudinary } from "cloudinary";
+import ApiError from "../../helpers/apiError.js";
 import User from "./user.model.js";
+
+export const updateAvatarService = async ({ userId, avatarUrl, avatarPublicId }) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found", "USER_NOT_FOUND");
+    }
+
+    const oldPublicId = user.avatarPublicId;
+    user.avatar = avatarUrl;
+    user.avatarPublicId = avatarPublicId;
+    await user.save();
+
+    if (oldPublicId) {
+        await cloudinary.uploader.destroy(oldPublicId);
+    }
+};
 
 export const searchUsersService = async (searchTerm, currentUserId) => {
     const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -1,7 +1,6 @@
 
 
-// FORMAT DATE TIME
-export default function formatMessageTime({ value, hourStyle = false }) {
+export default function formatMessageTime(value, hourStyle = false) {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {

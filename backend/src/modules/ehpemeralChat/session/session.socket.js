@@ -13,18 +13,12 @@ export const initSessionSocket = () => {
     sessionNamespace.use(sessionSocketAuth);
 
     sessionNamespace.on("connection", async (socket) => {
-        // console.log("Welcome: You are connected with Session Socket");
         const { participantId, sessionId, role } = socket.participant;
-
-        // const { participantId, sessionId, role } = sessionSocketAuth();
-        // console.log("IN SESSION SOCKET: ", participantId, sessionId, role);
 
         const room = `session:${sessionId}`;
 
         socket.join(room);
         const joinedAt = new Date();
-
-        console.log(`Participant [ ${participantId} ] [ joined ${room} ] [ ${role} ]`);
 
         // SESSION JOINED EVENT EMIT
         let participant;
@@ -177,9 +171,6 @@ export const initSessionSocket = () => {
 
 
 
-        socket.on("disconnect", () => {
-            console.log("Participant disconnected:", participantId);
-        });
     });
 
     console.log("Session Namespace Socket Initialized");

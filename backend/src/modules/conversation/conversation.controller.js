@@ -46,7 +46,6 @@ export const readConversationMessagesController = async(req, res, next) => {
         const userId = req.user._id;
         
         const result = await readConversationMessagesService(conversationId, userId);
-        // console.log("result from service", result)
         // socket io initialized for read
         const io = getIO();
         io.to(`chat:${conversationId}`).emit("message_read", {

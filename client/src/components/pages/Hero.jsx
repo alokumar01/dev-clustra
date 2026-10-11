@@ -1,116 +1,128 @@
-"use client"
-
 import Link from "next/link"
-import { ArrowRight, CheckCircle2, ExternalLink, Hash, MessageSquareText, Search, Send } from "lucide-react"
+import { ArrowRight, ExternalLink, GitBranch, MessageCircle, Radio, TimerReset } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-const tech = ["Next.js", "Express", "MongoDB", "Socket.IO", "Docker", "AWS"]
-const channels = ["architecture", "auth-flow", "socket-events", "deployment"]
-const messages = [
-  ["Aalok", "Auth middleware validates the access token before protected routes run."],
-  ["Meera", "Socket rooms are joined when a conversation is opened."],
-  ["Rohit", "Docker images are built for the client and backend services."],
-]
+const repoUrl = "https://github.com/alokumar01/dev-clustra"
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pt-28 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(113,113,122,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(113,113,122,0.10)_1px,transparent_1px)] bg-[size:44px_44px]" />
-      <div className="absolute inset-x-0 top-0 -z-10 h-[620px] bg-[radial-gradient(circle_at_50%_10%,rgba(37,99,235,0.18),transparent_48%),radial-gradient(circle_at_25%_20%,rgba(34,211,238,0.12),transparent_28%),radial-gradient(circle_at_78%_16%,rgba(251,146,60,0.10),transparent_26%)]" />
-
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-border/80 bg-background/88 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto max-w-4xl px-6 pb-10 pt-24 text-center sm:px-10 lg:pt-28">
-          <p className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-sm font-medium text-muted-foreground shadow-sm">
-            <CheckCircle2 className="size-4 text-blue-600" aria-hidden="true" />
-            Engineering Showcase
+    <section className="relative isolate overflow-hidden px-4 pb-16 pt-32 sm:px-6 sm:pb-20 sm:pt-36 lg:px-8 lg:pb-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+        <div className="max-w-3xl">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Independent engineering project
           </p>
-          <h1 className="mt-6 text-4xl font-semibold tracking-normal text-foreground sm:text-6xl lg:text-7xl">
-            A real-time developer collaboration platform built to explore backend engineering.
+          <h1 className="mt-5 max-w-4xl text-[clamp(2.75rem,5.5vw,5rem)] font-semibold leading-[0.98] tracking-normal text-foreground">
+            Real-time conversations. Built from the ground up.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
-            DevClustra brings authentication, REST APIs, real-time messaging, backend architecture, Docker, CI/CD, and deployment into one full-stack project.
+          <p className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+            Dev-Clustra is a real-time collaboration platform with persistent messaging and temporary chat sessions, built and deployed as a full-stack engineering project.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button asChild className="h-12 rounded-full bg-zinc-950 px-6 text-white hover:bg-zinc-800 dark:bg-blue-600 dark:hover:bg-blue-700">
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-6 text-background hover:bg-foreground/90">
               <Link href="/login">
-                Start Chatting
+                Try Dev-Clustra
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild variant="ghost" className="h-12 rounded-full px-6">
-              <a href="https://github.com/alokumar01" target="_blank" rel="noreferrer">
-                View GitHub
+            <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-border bg-transparent px-6 text-foreground hover:bg-secondary">
+              <Link href="/session" target="_blank" rel="noreferrer">
+                Create Temp Chat
                 <ExternalLink className="size-4" aria-hidden="true" />
-              </a>
+              </Link>
             </Button>
           </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {tech.map((item) => (
-              <span key={item} className="rounded-full border border-border bg-secondary/70 px-3 py-1 text-xs font-medium text-muted-foreground">
-                {item}
-              </span>
-            ))}
-          </div>
+
+          {/* <dl className="mt-10 grid max-w-2xl gap-4 border-y border-border py-5 sm:grid-cols-3">
+            <HeroFact icon={MessageCircle} label="Persistent chats" value="MongoDB backed" />
+            <HeroFact icon={Radio} label="Realtime layer" value="Socket.IO rooms" />
+            <HeroFact icon={TimerReset} label="Temporary rooms" value="Expiring sessions" />
+          </dl> */}
         </div>
 
-        <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-8 lg:pb-12">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl shadow-zinc-950/5 dark:shadow-black/30">
-            <div className="flex h-12 items-center justify-between border-b border-border px-4">
-              <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-red-400" />
-                <span className="size-3 rounded-full bg-yellow-400" />
-                <span className="size-3 rounded-full bg-green-500" />
+        <ProductSystemVisual />
+      </div>
+    </section>
+  )
+}
+
+function HeroFact({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary text-primary">
+        <Icon className="size-4" aria-hidden="true" />
+      </span>
+      <div>
+        <dt className="text-sm font-semibold text-foreground">{label}</dt>
+        <dd className="mt-1 font-mono text-xs text-muted-foreground">{value}</dd>
+      </div>
+    </div>
+  )
+}
+
+function ProductSystemVisual() {
+  return (
+    <div className="relative mx-auto w-full max-w-2xl lg:ml-auto">
+      <div className="rounded-2xl border border-border bg-card p-3 shadow-2xl shadow-black/20">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="size-2.5 rounded-full bg-red-400/80" aria-hidden="true" />
+            <span className="size-2.5 rounded-full bg-yellow-400/80" aria-hidden="true" />
+            <span className="size-2.5 rounded-full bg-[var(--success)]" aria-hidden="true" />
+          </div>
+          <span className="font-mono text-[11px] text-muted-foreground">dev-clustra / runtime map</span>
+        </div>
+
+        <div className="grid gap-3 p-3 sm:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">Product surface</p>
+                <p className="mt-1 text-xs text-muted-foreground">Actual chat capabilities</p>
               </div>
-              <div className="hidden items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground sm:flex">
-                <Search className="size-3.5" aria-hidden="true" />
-                Search project context
-              </div>
+              <span className="rounded-full border border-border px-2.5 py-1 font-mono text-[10px] text-muted-foreground">CLIENT</span>
             </div>
-            <div className="grid min-h-[430px] md:grid-cols-[220px_1fr]">
-              <aside className="border-b border-border bg-secondary/45 p-4 md:border-b-0 md:border-r">
-                <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Workspace</p>
-                <div className="mt-4 grid gap-2">
-                  {channels.map((channel) => (
-                    <div key={channel} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground first:bg-background first:text-foreground first:shadow-sm">
-                      <Hash className="size-4" aria-hidden="true" />
-                      {channel}
-                    </div>
-                  ))}
-                </div>
-              </aside>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-3 border-b border-border p-4">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600">
-                    <MessageSquareText className="size-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h2 className="text-sm font-semibold"># architecture</h2>
-                    <p className="text-xs text-muted-foreground">Backend design, socket events, and deployment notes</p>
-                  </div>
-                </div>
-                <div className="grid flex-1 gap-4 p-4">
-                  {messages.map(([name, message]) => (
-                    <div key={message} className="flex gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold">{name[0]}</span>
-                      <div className="rounded-2xl border border-border bg-background px-4 py-3">
-                        <p className="text-sm font-medium">{name}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t border-border p-4">
-                  <div className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-                    Document the next architecture decision...
-                    <Send className="size-4 text-blue-600" aria-hidden="true" />
-                  </div>
-                </div>
-              </div>
+            <div className="space-y-2.5">
+              <PreviewRow title="Direct conversations" detail="Stored message history, unread state, read receipts" />
+              <PreviewRow title="Invite links" detail="Private conversation entry through generated invites" />
+              <PreviewRow title="Temporary sessions" detail="Guest rooms for short-lived real-time chats" />
             </div>
           </div>
         </div>
       </div>
-    </section>
+
+    </div>
+  )
+}
+
+function PreviewRow({ title, detail }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-3">
+      <p className="text-sm font-semibold">{title}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p>
+    </div>
+  )
+}
+
+function SystemNode({ index, title, detail }) {
+  return (
+    <li className="grid grid-cols-[2.25rem_1fr] gap-3">
+      <span className="font-mono text-xs text-primary">{index}</span>
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span>
+      </span>
+    </li>
+  )
+}
+
+function StatusChip({ label }) {
+  return (
+    <span className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground">
+      <span className="size-1.5 rounded-full bg-[var(--success)]" aria-hidden="true" />
+      {label}
+    </span>
   )
 }

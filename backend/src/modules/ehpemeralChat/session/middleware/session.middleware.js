@@ -6,7 +6,6 @@ import Participant from "../participants.model.js";
 export const sessionAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    console.log("Authorization:", req.headers.authorization);
 
     if (!authHeader)
       throw new ApiError(
@@ -19,11 +18,8 @@ export const sessionAuth = async (req, res, next) => {
       ? authHeader.split(" ")[1] : authHeader;
 
     const decode = jwt.verify(token, JWT_SECRET);
-    console.info("DECODED IN SESSION AUTH: ", decode)
 
-    // const sessionId = decode.sessionId;
     const participantId = decode.sub;
-    // const role = decode.role;
 
     const participant = await Participant.findById(participantId);
 

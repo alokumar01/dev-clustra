@@ -1,147 +1,67 @@
 import { api } from "@/lib/api/axios";
 
 export async function loginWithAxios(credentials) {
-  try {
-    const response = await api.post("/auth/login", credentials);
-    console.log("login data: ", response.data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post("/auth/login", credentials);
+  return response.data;
 }
 
-// sign up
 export async function signupWithAxios(credentials) {
-  try {
-    const response = await api.post("/auth/signup", credentials);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post("/auth/signup", credentials);
+  return response.data;
 }
 
-//resend verification email
 export async function resendVerificationEmail(email) {
-  try {
-    const response = await api.post("/auth/resend-email", {
-      email: email,
-    });
-    // console.log("resend-mail data: ", response.data);
-    return response.data;
-  } catch (error) {
-
-    throw error;
-  }
+  const response = await api.post("/auth/resend-email", { email });
+  return response.data;
 }
 
-// VERIFY EMAIL
 export async function verifyVerificationEmail(token) {
-  try {
-
-    const response = await api.get("/auth/verify-email", {
-      params: { token }
-    })
-
-    return response.data;
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get("/auth/verify-email", {
+    params: { token },
+  });
+  return response.data;
 }
 
-// FORGOT PASSWORD
 export async function forgotPassword(email) {
-  try {
-
-    const response = await api.post("/auth/forgot-password", {
-      email: email,
-    });
-
-    return response.data;
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post("/auth/forgot-password", { email });
+  return response.data;
 }
 
-// RESET PASSWORD
 export async function resetPassword(token, newPassword) {
-  try {
-
-    const response = await api.post("/auth/reset-password", {
-      token,
-      newPassword
-    })
-
-    return response.data;
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post("/auth/reset-password", {
+    token,
+    newPassword,
+  });
+  return response.data;
 }
 
-// SERVER FETCH CURRENT USER (SERVER COMPONENT)
-
-
-// UPDATE PROFILE AVATAR
 export async function updateAvatar(formData) {
-  try {
-
-    const response = await api.patch("/user/update-avatar", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return response.data;
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.patch("/user/update-avatar", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
 }
 
-// UPDATE PROFILE
 export async function updateProfile({ username, bio }) {
-  try {
-
-    const response = await api.patch("/auth/update-profile", {
-      username: username,
-      bio: bio
-    })
-
-    return response.data;
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.patch("/auth/update-profile", {
+    username,
+    bio,
+  });
+  return response.data;
 }
 
-// SEARCH FOR USER IN CONVERSATIONS
 export async function searchUser(query) {
-  try {
-
-    const response = await api.get("/user/search", {
-      params: { query },
-    }); // this will build /user/search?query=jaimatadi
-    // console.log("Data from user search: ", response.data);
-    return response.data; // pass data not full axios response
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get("/user/search", {
+    params: { query },
+  });
+  return response.data;
 }
 
-// CHECK USERNAME AVAILABILITY
 export async function checkUsername(username) {
-  try {
-
-    const response = await api.get("/user/check-username", {
-      params: {username},
-    })
-
-    return response.data;
-
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.get("/user/check-username", {
+    params: { username },
+  });
+  return response.data;
 }
