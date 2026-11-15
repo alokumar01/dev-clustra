@@ -1,24 +1,16 @@
 # DevClustra 🚀
 
-> Real-time communication platform focused on backend architecture, real-time systems, containerized deployment, and DevOps workflows.
+> A real-time chat application for private conversations and temporary chat rooms, backed by a production deployment and monitoring workflow.
 
 ---
 
 # 📖 Overview
 
-DevClustra is a real-time chat and collaboration platform built to explore modern backend engineering, distributed systems, and DevOps workflows.
+DevClustra is a full-stack messaging application built with Next.js, Express, MongoDB, and Socket.IO. Users can create private conversations through invitations or join temporary chat sessions with a session code. The application is deployed on AWS EC2 with Kubernetes, and Jenkins automates backend checks and deployments.
 
-The project focuses on:
-
-- Real-time communication using Socket.IO
-- JWT authentication architecture
-- Conversation-based messaging systems
-- Dockerized full-stack workflows
-- CI/CD integration using Jenkins
-- Cloud-native deployment practices
-- Scalable backend architecture
-
-This project was designed to understand how modern communication systems work internally while integrating practical DevOps concepts used in production-grade environments.
+🌐 **Live application:** [devclustra.aalokkumar.dev](https://devclustra.aalokkumar.dev)  
+🩺 **API health:** [api.devclustra.aalokkumar.dev/health](https://api.devclustra.aalokkumar.dev/health)  
+👨‍💻 **Portfolio:** [aalokkumar.dev](https://aalokkumar.dev)
 
 ---
 
@@ -26,48 +18,49 @@ This project was designed to understand how modern communication systems work in
 
 ## 🔐 Authentication & Security
 
-- JWT Authentication
-- Access & Refresh Token flow
-- HTTP-only secure cookies
-- Persistent login sessions
-- Protected routes
-- Secure password hashing using bcrypt
+- Account registration with email verification
+- Login and logout with JWT access and refresh tokens
+- HTTP-only cookies for authentication
+- Password reset and password update flows
+- Protected API routes and input validation
+
+## 💬 Private Conversations
+
+- Start a one-to-one conversation through a shareable invitation link
+- Real-time message delivery with Socket.IO
+- Online and offline presence indicators
+- Typing indicators
+- Unread message counts and read status
+- Conversation history and profile editing
+
+## ⚡ Temporary Chat Sessions
+
+- Create and join temporary rooms using a session code
+- Invite participants with a link
+- Real-time messages and participant join/leave updates
+- Close or leave a session
+
+## ☁️ Media & Email
+
+- Cloudinary-backed profile image uploads
+- Resend-powered verification and password reset emails
 
 ---
 
-## 💬 Real-time Messaging
+# ⚡ Application Architecture
 
-- One-to-one conversations
-- Real-time message delivery
-- Online/offline user presence
-- Unread message tracking
-- Read receipts
-- Conversation-based chat architecture
-- Socket rooms for real-time updates
+```text
+Browser
+   │
+   ▼
+Next.js frontend ── HTTP API / Socket.IO ──► Express backend
+                                               │
+                                               ├── MongoDB
+                                               ├── Cloudinary
+                                               └── Resend
+```
 
----
-
-## ☁️ Cloud Media Support
-
-- Avatar uploads
-- Cloudinary integration
-- Secure media upload flow
-
----
-
-# ⚡ Backend Architecture
-
-Backend follows a modular architecture focused on scalability, maintainability, and separation of concerns.
-
-Core architecture layers include:
-
-- Controllers
-- Services
-- Middlewares
-- Authentication Layer
-- Conversation Layer
-- Message Layer
-- Socket Layer
+The backend uses feature modules for authentication, users, conversations, messages, invitations, and temporary sessions. Express handles the REST API, while Socket.IO provides authenticated, real-time messaging and presence updates.
 
 ---
 
@@ -75,150 +68,112 @@ Core architecture layers include:
 
 ## Frontend
 
-- Next.js
-- React
-- Tailwind CSS
-- shadcn/ui
-- Socket.IO Client
-- Zustand
-- Axios
-
----
+- Next.js and React
+- Tailwind CSS and Radix UI
+- Zustand for client state
+- Axios for API requests
+- Socket.IO Client for real-time updates
 
 ## Backend
 
-- Node.js
-- Express.js
-- MongoDB Atlas
-- Mongoose
+- Node.js and Express
+- MongoDB and Mongoose
 - Socket.IO
-- JWT
-- bcrypt
-- Cloudinary
+- JWT and bcryptjs
+- Zod validation
+- Cloudinary and Resend integrations
 
----
+## DevOps & Monitoring
 
-## DevOps & Cloud
-
-- Docker
-- Docker Compose
-- Docker Hub
-- Jenkins
-- AWS EC2
-- Kubernetes
-- Terraform
-- Prometheus & Grafana
-
----
-
-# 🐳 Containerization & DevOps
-
-DevClustra is fully containerized using Docker to ensure consistent development and deployment workflows.
-
-Implemented DevOps workflow includes:
-
-- Frontend Dockerization
-- Backend Dockerization
-- Docker Compose orchestration
-- Docker networking
-- Environment management
+- Docker and Docker Compose
+- Jenkins CI/CD
 - Docker Hub image registry
-- CI/CD integration workflow
+- AWS EC2
+- Kubernetes for application workloads
+- Terraform for AWS infrastructure
+- Grafana dashboards
+- Loki for log collection and exploration
+- Node Exporter for host metrics
 
 ---
 
-# 🏗️ Container Architecture
+# 🐳 Containerization
 
-```txt
-Browser
-   ↓
-Frontend Container (Next.js)
-   ↓
-REST APIs + Socket.IO
-   ↓
-Backend Container (Node.js + Express)
-   ↓
-MongoDB Atlas
+The frontend and backend each have a Dockerfile. Docker Compose builds and runs both services for local use, and the backend image is published to Docker Hub for the Kubernetes deployment.
+
+```text
+Client Dockerfile ──► Frontend container
+Backend Dockerfile ─► Backend image ─► Docker Hub ─► Kubernetes
 ```
+
 ---
 
 # 🔄 CI/CD Workflow
 
-Current CI/CD pipeline architecture:
+Jenkins is live and runs the project's CI and deployment pipelines.
 
-```txt
-GitHub Push
-      ↓
-Jenkins Pipeline
-      ↓
-Build Docker Images
-      ↓
-Push Images to Docker Hub
-      ↓
-Deployment Workflow
+```text
+GitHub push
+    │
+    ▼
+Jenkins CI: install dependencies, lint backend, run backend tests, build frontend
+    │
+    ├── On main: build and push versioned backend image to Docker Hub
+    │
+    ▼
+Jenkins CD: update Kubernetes backend deployment on AWS EC2
+    │
+    ▼
+Wait for rollout, verify pods, check live API health endpoint
 ```
 
-This workflow helps automate:
-
-- Build processes
-- Image generation
-- Deployment consistency
-- Environment reproducibility
-- Scalable deployment practices
+The frontend image publishing stages are currently disabled in `Jenkinsfile.ci`; the active image publishing and CD flow deploys the backend.
 
 ---
 
-# 🏗️ Application Architecture
+# ☁️ AWS, Kubernetes & Monitoring
 
-```txt
-Frontend (Next.js)
-        ↓
-REST APIs + Socket.IO
-        ↓
-Backend (Node.js + Express)
-        ↓
-MongoDB Atlas
-```
+The application runs on an AWS EC2 server in a Kubernetes environment. Jenkins connects to the EC2 host and updates the backend deployment when a new backend image is published.
+
+The deployed monitoring stack includes:
+
+- **Grafana** for dashboards and monitoring views
+- **Loki** for centralized log collection and exploration
+- **Node Exporter** for EC2 host metrics
+
+Terraform configuration is in `infra/terraform`. It defines the EC2 instance, security group, and Elastic IP. The Terraform variables configure the AWS region, instance type, and instance name.
 
 ---
 
 # 📂 Project Structure
 
-```bash
+```text
 dev-clustra/
-│
 ├── client/
-│   ├── app/
-│   ├── components/
-│   ├── store/
-│   ├── services/
-│   ├── lib/
-│   ├── public/
+│   ├── src/app/                 # Next.js pages and routes
+│   ├── src/components/          # Chat, auth, session, and shared UI
+│   ├── src/store/               # Zustand stores
+│   ├── src/lib/                 # API client and utilities
 │   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── .env.local
-│   └── .env.docker
-│
+│   └── .env                     # Local client environment (not committed)
 ├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── modules/
-│   │   │   ├── auth/
-│   │   │   ├── user/
-│   │   │   ├── conversation/
-│   │   │   └── message/
-│   │   ├── middlewares/
-│   │   ├── helpers/
-│   │   ├── routes/
-│   │   ├── socket-server.js
-│   │   └── app.js
-│   │
+│   ├── src/modules/
+│   │   ├── auth/                 # Registration, login, verification, reset
+│   │   ├── conversation/         # Private conversations and read status
+│   │   ├── message/              # Message API and persistence
+│   │   ├── invite/               # Conversation invitations
+│   │   ├── user/                 # User profiles
+│   │   ├── media/                # Upload handling
+│   │   └── ehpemeralChat/session/ # Temporary chat sessions and sockets
+│   ├── src/config/               # Database, CORS, email, and app config
+│   ├── src/routes/               # Versioned API routes
+│   ├── tests/                   # Backend tests
 │   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── .env
-│   └── server.js
-│
-├── docker-compose.yml
+│   └── .env                     # Local backend environment (not committed)
+├── infra/terraform/              # AWS EC2 infrastructure
+├── Jenkinsfile.ci                # CI, backend image publishing, CD trigger
+├── Jenkinsfile.cd                # Kubernetes deployment and health check
+├── docker-compose.yml            # Local frontend and backend services
 └── README.md
 ```
 
@@ -226,98 +181,97 @@ dev-clustra/
 
 # ⚙️ Environment Variables
 
-## Frontend `.env.local`
+Create local environment files from these examples. Replace every placeholder with your own value, and do not commit secrets.
+
+## Frontend — `client/.env`
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
 ```
 
----
-
-## Frontend `.env.docker`
+## Backend — `backend/.env`
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
+PORT=5000
+NODE_ENV=development
+MONGO_URI=<your_mongodb_connection_string>
+FRONTEND_URL=http://localhost:3000
+FRONTEND_LIVE_URL=http://localhost:3000
+COOKIE_DOMAIN=
+JWT_SECRET=<long_random_secret>
+JWT_REFRESH_SECRET=<another_long_random_secret>
+JWT_ACCESS_TOKEN_EXPIRES=15m
+JWT_REFRESH_TOKEN_EXPIRES=7d
+CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
+RESEND_API_KEY=<your_resend_api_key>
 ```
 
----
+`CLOUDINARY_URL` is required when the backend starts. MongoDB, Cloudinary, and Resend credentials must be supplied by you. For production, set the frontend URLs and cookie domain to the deployed domains and use secure, unique secrets.
 
-## Backend `.env`
+## Terraform — `infra/terraform/terraform.tfvars`
 
-```env
-PORT=
-MONGO_URI=
+Terraform expects these input values. Keep the `.tfvars` file local; it is excluded from Git.
 
-JWT_SECRET=
-JWT_ACCESS_TOKEN_EXPIRES=
-JWT_REFRESH_TOKEN_EXPIRES=
-
-CLIENT_URL=
-
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-RESEND_API_KEY=
+```hcl
+aws_region    = "<aws-region>"
+instance_type = "<ec2-instance-type>"
+instance_name = "devclustra-server"
 ```
 
 ---
 
 # 🚀 Local Development Setup
 
-## 1. Clone Repository
+## 1. Clone the repository
 
 ```bash
 git clone https://github.com/alokumar01/dev-clustra.git
+cd dev-clustra
 ```
 
----
-
-## 2. Install Dependencies
-
-### Frontend
-
-```bash
-cd client
-pnpm install
-```
-
-### Backend
+## 2. Install backend dependencies
 
 ```bash
 cd backend
 pnpm install
 ```
 
----
+## 3. Install frontend dependencies
 
-## 3. Run Development Servers
-
-### Frontend
+Open another terminal from the project root:
 
 ```bash
+cd client
+pnpm install
+```
+
+## 4. Start the services
+
+Run in separate terminals:
+
+```bash
+# Terminal 1 — from backend/
 pnpm dev
 ```
 
-### Backend
-
 ```bash
+# Terminal 2 — from client/
 pnpm dev
 ```
 
+Open [http://localhost:3000](http://localhost:3000). The backend health endpoint is [http://localhost:5000/health](http://localhost:5000/health).
+
 ---
 
-# 🐳 Docker Setup
+# 🐳 Docker Compose Setup
 
-## Build & Run Containers
+Make sure `client/.env` and `backend/.env` are configured first, then run from the project root:
 
 ```bash
 docker compose up --build
 ```
 
----
-
-## Stop Containers
+Stop the services with:
 
 ```bash
 docker compose down
@@ -325,85 +279,16 @@ docker compose down
 
 ---
 
-# 📦 Docker Hub Integration
+# 🧠 Engineering Concepts
 
-Docker images are pushed to Docker Hub for deployment and CI/CD workflows.
-
-Docker Hub repositories:
-
-```txt
-aalokumar01/dev-clustra-frontend
-aalokumar01/dev-clustra-backend
-```
-
-Docker workflow:
-
-```txt
-Dockerfile
-    ↓
-Docker Build
-    ↓
-Docker Image
-    ↓
-Docker Hub Push
-    ↓
-Deployment Workflow
-```
-
----
-
-# ☁️ Deployment Roadmap
-
-## Current
-
-- Dockerized frontend & backend
-- Docker Compose orchestration
-- Docker networking
-- Docker Hub workflow
-- Jenkins CI/CD integration
-
----
-
-## Planned
-
-- AWS EC2 deployment
-- Kubernetes orchestration
-- Terraform infrastructure provisioning
-- Monitoring using Prometheus & Grafana
-- Redis integration
-
----
-
-# 🧠 Engineering Concepts Explored
-
-This project focuses heavily on understanding:
-
-- Real-time system design
-- WebSocket architecture
-- JWT authentication flow
-- Refresh token mechanisms
-- Socket rooms & presence systems
-- Containerized workflows
-- Docker networking
-- CI/CD pipelines
-- Cloud deployment workflows
-- Modular backend architecture
-- Scalable infrastructure concepts
-
----
-
-# 🎯 Learning Goals
-
-DevClustra was built to explore practical software engineering concepts beyond traditional CRUD applications.
-
-Primary focus areas include:
-
-- Backend engineering
-- Real-time communication systems
-- DevOps workflows
-- Container orchestration concepts
-- Cloud deployment workflows
-- Scalable architecture design
+- Real-time communication with authenticated Socket.IO connections
+- JWT access and refresh token lifecycle
+- Conversation membership checks and socket rooms
+- Temporary room lifecycle and participant events
+- Containerized development and deployment
+- Jenkins CI/CD and Kubernetes rollout verification
+- AWS infrastructure provisioning with Terraform
+- Host metrics and centralized logs with Node Exporter, Grafana, and Loki
 
 ---
 
@@ -411,23 +296,8 @@ Primary focus areas include:
 
 ## Alok Kumar
 
-- Full Stack & DevOps Enthusiast
-- Focused on Backend Engineering, Cloud, and Real-time Systems
+- Full-stack developer focused on backend engineering and DevOps
 
-### GitHub
-
-```txt
-https://github.com/alokumar01
-```
-
-### Portfolio
-
-```txt
-https://whoisalok.tech
-```
-
-### Project Repository
-
-```txt
-https://github.com/alokumar01/dev-clustra
-```
+**Portfolio:** [aalokkumar.dev](https://aalokkumar.dev)  
+**GitHub:** [github.com/alokumar01](https://github.com/alokumar01)  
+**Project:** [github.com/alokumar01/dev-clustra](https://github.com/alokumar01/dev-clustra)
