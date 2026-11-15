@@ -19,3 +19,11 @@ testmail.js
 # docs
 .vscode/
 test-mail.js
+
+#infra
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
