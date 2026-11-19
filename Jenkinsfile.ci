@@ -23,7 +23,7 @@ pipeline {
             steps {
                 sh '''
                     corepack enable
-                    corepack prepare pnpm@11.9.0 --activate
+                    corepack prepare pnpm@12.18.0 --activate
                     pnpm --version
                 '''
             }
@@ -65,6 +65,31 @@ pipeline {
             steps {
                 dir('client') {
                     sh 'pnpm build'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonarcloud-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
+                        sh '''
+                            /opt/sonar-scanner/bin/sonar-scanner \
+                                -Dsonar.host.url=https://sonarcloud.io \
+                                -Dsonar.organization=alokumar01 \
+                                -Dsonar.projectKey=alokumar01_dev-clustra \
+                                -Dsonar.projectName=DevClustra \
+                                -Dsonar.sources=backend/src,backend/server.js,client/src \
+                                -Dsonar.tests=backend/tests \
+                                -Dsonar.test.inclusions="backend/tests/**/*.js" \
+                                -Dsonar.exclusions="**/node_modules/**,client/.next/**,**/coverage/**,**/dist/**,**/build/**,backend/src/test-*.js"
+                        '''
+                    }
                 }
             }
         }
